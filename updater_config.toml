@@ -2,7 +2,8 @@ root = "/home/al/01_personal_docs/EDETEK/repos/"
 
 # version that should be set to the package on specific branch
 [git]
-version = "0.0.1"
+# 5.8.19a or "" for autodetect
+version = ""
 branch = "dev-59"
 
 [repos]
