@@ -34,12 +34,6 @@ pub enum RepoType {
     
 }
 
-impl Data {
-    pub fn update_version(&mut self, version: &str) {
-        self.git.version = version.to_string();
-    }
-}
-
 impl WorkersConfig {
     pub fn get_repos_list(&self) -> Vec<String> {
         let mut repos: Vec<String> = Vec::new();

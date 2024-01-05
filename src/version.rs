@@ -13,8 +13,10 @@ pub struct VersionSelecter {
 impl VersionSelecter {
     pub fn get_version(&self) -> String {
         if self.expected_version.is_empty() {
+            println!("Expected version is empty. Getting current version from file...");
             let current_version =  self.read_version_file();
             let next_version = self.get_next_version_from_current(current_version);
+            println!("Got next version: {}", next_version);
 
             return next_version;
         }

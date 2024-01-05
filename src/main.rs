@@ -10,7 +10,7 @@ mod loginer;
 fn main() {
     println!("Hello, from batch version updater on rust!");
     println!("Starting version updater...");
-    let mut config = config::read_config();
+    let config = config::read_config();
 
     let repos = config.repos.get_repos_list();
     println!("Repos to update: {:#?}", repos);
@@ -46,8 +46,6 @@ fn main() {
     
         let version = selecter.get_version();
         println!("Next Version: {}", version);
-
-        config.update_version(&version);
     }
 }
 

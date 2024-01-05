@@ -27,7 +27,7 @@ impl RepoRebuilder {
     }
 
     fn delete_folders(&self){
-        println!("Deleting node_modules and dis folders");
+        println!("Deleting node_modules and dist folders");
         let output = Command::new("rm")
             .arg("-rf")
             .current_dir(&self.repo)
