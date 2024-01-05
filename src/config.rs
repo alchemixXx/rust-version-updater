@@ -27,6 +27,13 @@ pub struct Data {
     pub repos: WorkersConfig,
 }
 
+#[derive(Debug)]
+pub enum RepoType {
+    Node,
+    Python,
+    
+}
+
 impl Data {
     pub fn update_version(&mut self, version: &str) {
         self.git.version = version.to_string();
@@ -43,6 +50,17 @@ impl WorkersConfig {
             repos.push(repo.to_string());
         }
         repos
+    }
+
+    pub fn get_repo_type(&self, repo: &str) -> RepoType{
+        if self.node_workers.contains(&repo.to_string()) {
+            return RepoType::Node;
+        }
+        if self.python_workers.contains(&repo.to_string()) {
+            return RepoType::Python;
+        }
+        
+        panic!("Unknown repo type");
     }
 }
 
