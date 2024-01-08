@@ -3,6 +3,7 @@ use serde_json;
 use std::fs;
 use std::path::Path;
 
+
 const VERSION_FILES:[&str; 2] = ["package.json", "version.json"];
 
 pub struct VersionSelecter {
@@ -11,16 +12,22 @@ pub struct VersionSelecter {
 }
 
 impl VersionSelecter {
-    pub fn get_version(&self) -> String {
+    pub fn get_version(&self) -> (String, String) {
+        println!("Getting current version...");
+        let current_version =  self.read_version_file();
+        println!("Got current version: {}", current_version);
+
+
         if self.expected_version.is_empty() {
             println!("Expected version is empty. Getting current version from file...");
-            let current_version =  self.read_version_file();
-            let next_version = self.get_next_version_from_current(current_version);
+            
+            let next_version = self.get_next_version_from_current(current_version.clone());
             println!("Got next version: {}", next_version);
 
-            return next_version;
+            return (current_version, next_version);
         }
-        return self.expected_version.clone()
+        
+        return (current_version, self.expected_version.clone())
     }
 
     fn get_next_version_from_current(&self, mut current_version: String) -> String {

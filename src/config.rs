@@ -18,6 +18,7 @@ pub struct WorkersConfig {
 pub struct GitConfig {
     pub version: String,
     pub branch: String,
+    pub release_branch: String,
 }
 // Top level struct to hold the TOML data.
 #[derive(Debug, Deserialize)]

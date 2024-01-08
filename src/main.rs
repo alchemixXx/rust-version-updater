@@ -5,6 +5,7 @@ mod config;
 mod branch;
 mod rebuilder;
 mod loginer;
+mod patcher;
 
 
 fn main() {
@@ -41,11 +42,16 @@ fn main() {
 
         let selecter = version::VersionSelecter {
             expected_version: config.git.version.clone(),
-            repo: repo_path
+            repo: repo_path.clone()
         };
     
-        let version = selecter.get_version();
-        println!("Next Version: {}", version);
+        let (current_version, next_version) = selecter.get_version();
+        println!("Versions: current={}, next={}", current_version, next_version);
+
+        println!("Updating version in repo: {}", repo_path);
+        let patcher = patcher::Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
+
+        patcher.update_version_in_repo();
     }
 }
 
