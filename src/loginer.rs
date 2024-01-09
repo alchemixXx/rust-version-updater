@@ -1,4 +1,4 @@
-use std::process::{Command, exit};
+use std::process::Command;
 
 # [derive(Debug)]
 enum TargetConfig {
@@ -46,7 +46,7 @@ fn login_to_aws(target_config: TargetConfig){
             if !output.status.success() {
                 eprintln!("Failed to login to AWS");
                 eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-                exit(1);
+                panic!("Failed to login to AWS");
             }
         }
             
@@ -62,7 +62,7 @@ fn use_target_config(target_config: &String) {
     if !output.status.success() {
         eprintln!("Failed to use target config");
         eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-        exit(1);
+        panic!("Failed to use target config");
     }
     println!("Used target config");
 }
@@ -78,5 +78,5 @@ fn get_target_config(branch: &String) -> TargetConfig {
     }
 
     eprintln!("Unknown branch: {}", branch);
-    exit(1);
+    panic!("Unknown branch");
 }

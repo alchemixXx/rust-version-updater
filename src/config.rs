@@ -2,7 +2,6 @@
 use serde_derive::Deserialize;
 
 use std::fs;
-use std::process::exit;
 use toml;
 
 
@@ -61,23 +60,9 @@ impl WorkersConfig {
 
 pub fn read_config() -> Data {
     println!("Reading config file: {}", CONFIG_FILE);
-    let contents = match fs::read_to_string(CONFIG_FILE) {
-        Ok(c) => c,
-        Err(_) => {
-            eprintln!("Could not read file `{}`", CONFIG_FILE);
-            exit(1);
-        }
-    };
+    let contents = fs::read_to_string(CONFIG_FILE).expect(format!("Could not read file `{}`", CONFIG_FILE).as_str()); 
 
-    let data: Data = match toml::from_str(&contents) {
-        Ok(d) => d,
-        Err(msg) => {
-            eprintln!("{}", msg);
-            eprintln!("Unable to load data from `{}`", CONFIG_FILE);
-            exit(1);
-        }
-    };
-
+    let data: Data = toml::from_str(&contents).expect(format!("Unable to load data from `{}`", CONFIG_FILE).as_str());
     println!("Read config file: {}", CONFIG_FILE);
     println!("{:#?}", data);
     

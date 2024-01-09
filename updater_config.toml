@@ -9,7 +9,7 @@ release_branch = "5.9_RELEASE"
 
 [repos]
 node_workers = [
-  # 'conform5-bpo-api',
+  'conform5-bpo-api',
   # 'conform5-bxp-api',
   # 'conform5-dvw-api',
   # 'conform5-lambda-batch-audit',
@@ -26,7 +26,7 @@ node_workers = [
 ]
 
 python_workers = [
-  'conform5-lambda-batch-vr-python-custom-code',
+  # 'conform5-lambda-batch-vr-python-custom-code',
   # 'conform5-lambda-batch-mt-python-custom-code',
 ]
 

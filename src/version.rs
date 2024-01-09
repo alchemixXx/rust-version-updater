@@ -1,4 +1,3 @@
-use std::process::exit;
 use serde_json;
 use std::fs;
 use std::path::Path;
@@ -78,18 +77,12 @@ impl VersionSelecter {
 
         }
         eprintln!("Could not get version from any of the files `{:?}`", VERSION_FILES);
-        exit(1);
+        panic!("Could not get version from any of the files");
     }
 
     fn get_version_path(&self, file_name: &str) -> String {
         let path = Path::new(&self.repo).join(file_name);
-        let path = match path.to_str() {
-            Some(v) => v.to_string(),
-            None => {
-                println!("Can't build path: {}, {}", self.repo, file_name);
-                exit(1);
-            }
-        };
+        let path = path.to_str().expect(format!("Can't build path: {}, {}", self.repo, file_name).as_str()).to_string();
         println!("Path: {}", path);
         path
     }

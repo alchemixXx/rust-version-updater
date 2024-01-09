@@ -1,4 +1,4 @@
-use std::process::{Command, exit};
+use std::process::Command;
 
 use crate::config::RepoType;
 
@@ -36,7 +36,7 @@ impl RepoRebuilder {
         if !output.status.success() {
             eprintln!("Failed to delete folders in repo: {}", self.repo);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to delete folders in repo");
         }
         println!("Deleted node_modules and dis folders");
     }
@@ -51,7 +51,7 @@ impl RepoRebuilder {
         if !output.status.success() {
             eprintln!("Failed to install packages in repo: {}", self.repo);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to install packages in repo");
         }
         println!("Installed packages");
     }
@@ -67,7 +67,7 @@ impl RepoRebuilder {
         if !output.status.success() {
             eprintln!("Failed to build node repo: {}", self.repo);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to build node repo");
         }
         println!("Built node repo");
     }

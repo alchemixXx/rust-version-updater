@@ -1,4 +1,4 @@
-use std::process::{exit, Command};
+use std::process::Command;
 
 pub struct BranchSwitcher {
     pub target_branch: String,
@@ -25,7 +25,7 @@ impl BranchSwitcher {
         if !output.status.success() {
             eprintln!("Failed to hard reset branch for repo: {}", repo_path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to hard reset branch for repo");
         }
     }
 
@@ -39,7 +39,7 @@ impl BranchSwitcher {
         if !output.status.success() {
             eprintln!("Failed to stash repo: {}", repo_path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to stash repo");
         }
     }
 
@@ -54,7 +54,7 @@ impl BranchSwitcher {
         if !output.status.success() {
             eprintln!("Failed to fetch repo: {}", repo_path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to fetch repo");
         }
     }
 
@@ -69,7 +69,7 @@ impl BranchSwitcher {
         if !output.status.success() {
             eprintln!("Failed to switch branch for repo: {}", repo_path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to switch branch for repo");
         }
     }
 }

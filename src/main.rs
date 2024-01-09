@@ -1,11 +1,13 @@
+use std::collections::HashMap;
 use std::path::Path;
-use std::process::exit;
+use std::process::Output;
 mod version;
 mod config;
 mod branch;
 mod rebuilder;
 mod loginer;
 mod patcher;
+mod history;
 
 
 fn main() {
@@ -16,9 +18,13 @@ fn main() {
     let repos = config.repos.get_repos_list();
     println!("Repos to update: {:#?}", repos);
 
+    let mut result_string = String::new();
+
     println!("Logging in to AWS...");
     loginer::login(config.git.branch.clone());
-    println!("Logged in to AWS...");
+    println!("Logged in to AWS");
+
+    let mut results_hash: HashMap<&String, Output> = HashMap::new();
 
     for repo in repos.iter() {
         
@@ -26,7 +32,7 @@ fn main() {
         let repo_type = config.repos.get_repo_type(repo);
         println!("Got repo type for repo: {}.Type={:?}", repo, repo_type);
         
-        let repo_path = get_repo_path(&config.root, repo);
+        let repo_path = Path::new(&config.root).join(&repo).to_str().expect("Cant't build path").to_string();
         let switcher = branch::BranchSwitcher{target_branch:config.git.branch.to_string()};
         
         println!("Checking out to target branch for repo: {}", repo_path);
@@ -48,26 +54,28 @@ fn main() {
         let (current_version, next_version) = selecter.get_version();
         println!("Versions: current={}, next={}", current_version, next_version);
 
+        let history_provider = history::HistoryProvider{path:repo_path.clone()};
+
+        println!("Collecting repo history: {}", repo_path);
+        let history = history_provider.provide();
+        println!("Collected repo history: {}. Results: {:?}", repo_path, history);
+
+        result_string.push_str(&format!("{}\n release/{}\n {}\n", repo, next_version, history));
+
         println!("Updating version in repo: {}", repo_path);
         let patcher = patcher::Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
 
-        patcher.update_version_in_repo();
+        let result = patcher.update_version_in_repo();
+
+        results_hash.insert(repo, result);
     }
+
+    println!("Repos history logs:: {:#?}", result_string);
+    println!("Repos PRs: {:#?}", results_hash);
+    println!("Version updater finished!");
 }
 
 
-fn get_repo_path(root: &str, repo: &str) -> String {
-    let path = Path::new(root).join(repo);
-    let path = match path.to_str() {
-        Some(v) => v.to_string(),
-        None => {
-            println!("Can't build path: {}, {}", root, repo);
-            exit(1);
-        }
-    };
-    println!("Repo Path: {}", path);
-    path
-}
 
 
 

@@ -1,7 +1,7 @@
 use crate::config::RepoType;
 use std::fs::{read_to_string, write};
 use std::path::Path;
-use std::process::{Command, exit, Output};
+use std::process::{Command, Output};
 
 pub struct Patcher {
     pub next_version: String,
@@ -13,20 +13,18 @@ pub struct Patcher {
 }
 
 impl Patcher {
-    pub fn update_version_in_repo(&self){
+    pub fn update_version_in_repo(&self) -> Output{
         println!("Updating version in repo: {}", self.path);
-        match self.repo_type {
-            RepoType::Node => {
-                self.patch_node();
-            },
-            RepoType::Python => {
-                self.patch_python();
-            }
-        }
+        let result = match self.repo_type {
+            RepoType::Node => self.patch_node(),
+            RepoType::Python => self.patch_python()
+        };
         println!("Updated version in repo: {}. New version is: {}", self.path, self.next_version);
+
+        return result;
     }
 
-    fn patch_node(&self) {
+    fn patch_node(&self) -> Output {
         println!("Patching node repo: {}", self.path);
         let last: char = self.current_version.chars().last().unwrap();
         
@@ -46,13 +44,15 @@ impl Patcher {
         self.add_tags();
         self.push_to_origin();
         self.push_to_tags();
-        self.create_pr();
+        let pr_link: Output = self.create_pr();
 
 
-        println!("Patched node repo: {}", self.path);
+        println!("Patched node repo: {}. PR: {:?}", self.path, pr_link);
+
+        return pr_link
     }
 
-    fn patch_python(&self) {
+    fn patch_python(&self) -> Output {
         println!("Patching python repo: {}", self.path);
 
         println!("Patching python repo by replacement: {}", self.path);
@@ -64,9 +64,11 @@ impl Patcher {
         self.add_tags();
         self.push_to_origin();
         self.push_to_tags();
-        self.create_pr();
+        let pr_link: Output = self.create_pr();
 
-        println!("Patched python repo: {}", self.path);
+        println!("Patched python repo: {}. PR: {:?}", self.path, pr_link);
+
+        return pr_link;
     }
 
     fn up_npm_version(&self) {
@@ -80,7 +82,7 @@ impl Patcher {
         if !output.status.success() {
             eprintln!("Failed increase version by npm in repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed increase version by npm in repo");
         }
     }
 
@@ -103,9 +105,9 @@ impl Patcher {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to hard reset branch for repo: {}", self.path);
+            eprintln!("Failed add changes for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed add changes for repo");
         }
         println!("Added changes to git: {}", self.path);
     }
@@ -120,11 +122,11 @@ impl Patcher {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to hard reset branch for repo: {}", self.path);
+            eprintln!("Failed to commit for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to commit for repo");
         }
-        println!("Committing changes to git: {}", self.path);
+        println!("Committed changes to git: {}", self.path);
     }
 
     fn add_tags(&self) {
@@ -139,9 +141,9 @@ impl Patcher {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to hard reset branch for repo: {}", self.path);
+            eprintln!("Failed add tags for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed add tags for repo");
         }
         println!("Adding tags to git: {}", self.path);
     }
@@ -155,9 +157,9 @@ impl Patcher {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to hard reset branch for repo: {}", self.path);
+            eprintln!("Failed to push changes for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to push changes for repo");
         }
         println!("Pushed changes to git origin: {}", self.path);
     }
@@ -171,9 +173,9 @@ impl Patcher {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to hard reset branch for repo: {}", self.path);
+            eprintln!("Failed to push tags for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to push tags for repo");
         }
         println!("Pushed tags to git origin: {}", self.path);
     }
@@ -190,9 +192,9 @@ impl Patcher {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to hard reset branch for repo: {}", self.path);
+            eprintln!("Failed to create PR for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            exit(1);
+            panic!("Failed to create PR for repo");
         }
         println!("Created PR in AWS: {}", self.path);
 
