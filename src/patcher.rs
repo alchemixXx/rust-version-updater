@@ -117,7 +117,7 @@ impl Patcher {
         let output = Command::new("git")
             .arg("commit")
             .arg("-am")
-            .arg(format!("'@{} release'", self.next_version))
+            .arg(format!("@{} release", self.next_version))
             .current_dir(&self.path)
             .output()
             .expect("Failed to execute git command");
@@ -132,11 +132,11 @@ impl Patcher {
     fn add_tags(&self) {
         println!("Adding tags to git: {}", self.path);
         let output = Command::new("git")
-            .arg("commit")
+            .arg("tag")
             .arg("-a")
-            .arg(format!("'@{} release'", self.next_version))
+            .arg(format!("release/{}", self.next_version))
             .arg("-m")
-            .arg(format!("'@{} release version'", self.next_version))
+            .arg(format!("release/{} version", self.next_version))
             .current_dir(&self.path)
             .output()
             .expect("Failed to execute git command");
@@ -152,6 +152,8 @@ impl Patcher {
         println!("Pushing changes to git origin: {}", self.path);
         let output = Command::new("git")
             .arg("push")
+            .arg("origin")
+            .arg(self.branch.as_str())
             .arg("-f")
             .current_dir(&self.path)
             .output()
@@ -175,6 +177,13 @@ impl Patcher {
         if !output.status.success() {
             eprintln!("Failed to push tags for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+
+            for line in String::from_utf8_lossy(&output.stderr).lines() {
+                if line.contains("[new tag]") {
+                    println!("Tag was pushed");
+                    return;
+                }
+            }
             panic!("Failed to push tags for repo");
         }
         println!("Pushed tags to git origin: {}", self.path);
@@ -188,7 +197,7 @@ impl Patcher {
             .arg(&self.branch)
             .arg(&self.release_branch)
             .arg(format!("'CDA Artifact {}'", self.next_version))
-            .current_dir(&self.branch)
+            .current_dir(&self.path)
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {

@@ -9,7 +9,7 @@ release_branch = "5.9_RELEASE"
 
 [repos]
 node_workers = [
-  'conform5-bpo-api',
+  # 'conform5-bpo-api',
   # 'conform5-bxp-api',
   # 'conform5-dvw-api',
   # 'conform5-lambda-batch-audit',
@@ -17,11 +17,11 @@ node_workers = [
   # 'conform5-lambda-batch-define-xml-validator',
   # 'conform5-lambda-batch-issue-load-worker',
   # 'conform5-lambda-batch-issues-report-generator',
-  'conform5-lambda-batch-load-worker',
+  # 'conform5-lambda-batch-load-worker',
   # 'conform5-lambda-batch-parsing-worker',
   # 'conform5-lambda-batch-sdtm-validation',
   # 'conform5-lambda-batch-standard-merger',
-  # 'conform5-cb-rule-templates',
+  'conform5-cb-rule-templates',
   # 'conform5-lambda-batch-transformation-worker',
 ]
 
