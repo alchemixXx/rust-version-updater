@@ -19,12 +19,13 @@ fn main() {
     println!("Repos to update: {:#?}", repos);
 
     let mut result_string = String::new();
+    result_string.push_str("\n");
 
     println!("Logging in to AWS...");
     loginer::login(config.git.branch.clone());
     println!("Logged in to AWS");
 
-    let mut results_hash: HashMap<&String, Output> = HashMap::new();
+    let mut results_hash: HashMap<&String, String> = HashMap::new();
 
     for repo in repos.iter() {
         
@@ -66,11 +67,13 @@ fn main() {
         let patcher = patcher::Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
 
         let result = patcher.update_version_in_repo();
+        let std_out = String::from_utf8(result.stdout.clone()).expect("Cant't parse stdout");
+        let replaced_stdout = std_out.replace("\n", "\n\t");
 
-        results_hash.insert(repo, result);
+        results_hash.insert(repo, replaced_stdout);
     }
 
-    println!("Repos history logs:: {:#?}", result_string);
+    println!("Repos history logs: {}", result_string);
     println!("Repos PRs: {:#?}", results_hash);
     println!("Version updater finished!");
 }
