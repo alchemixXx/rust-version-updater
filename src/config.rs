@@ -24,6 +24,7 @@ pub struct GitConfig {
 pub struct Data {
     pub git:GitConfig,
     pub root: String,
+    pub dry_run: bool,
     pub repos: WorkersConfig,
 }
 
@@ -36,7 +37,7 @@ pub enum RepoType {
 
 impl WorkersConfig {
     pub fn get_repos_list(&self) -> Vec<String> {
-        let mut repos: Vec<String> = Vec::new();
+        let mut repos: Vec<String> = Vec::with_capacity(self.node_workers.len() + self.python_workers.len());
         for repo in self.node_workers.iter() {
             repos.push(repo.to_string());
         }

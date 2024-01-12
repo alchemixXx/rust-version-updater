@@ -7,9 +7,6 @@ enum TargetConfig {
 }
 
 
-
-
-
 pub fn login(branch: String) {
     println!("Logging in");
     let target_config = get_target_config(&branch);

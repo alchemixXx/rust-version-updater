@@ -23,7 +23,7 @@ impl HistoryProvider {
 
         for part in parts {
             let trimmed = part.trim().replace("* ", "");
-            if trimmed.starts_with("release/") || trimmed.starts_with("@/") {
+            if trimmed.starts_with("release/") || trimmed.starts_with("@") {
                 return target;
             }
             

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::path::Path;
-use std::process::Output;
 mod version;
 mod config;
 mod branch;
@@ -40,13 +39,15 @@ fn main() {
         switcher.checkout_target_branch(&repo_path);
         println!("Checked out to target branch for repo: {}", repo_path);
 
-        println!("Rebuilding repo: {}", repo_path);
-        let rebuilder = rebuilder::RepoRebuilder{repo:repo_path.clone(), repo_type:repo_type};
-        rebuilder.rebuild_repo();
-        println!("Rebuilt repo: {}", repo_path);
-
-
-
+        if config.dry_run {
+            println!("Dry run mode. Skipping repo rebuild: {}", repo_path);
+        } else {
+            println!("Rebuilding repo: {}", repo_path);
+            let rebuilder = rebuilder::RepoRebuilder{repo:repo_path.clone(), repo_type:repo_type};
+            rebuilder.rebuild_repo();
+            println!("Rebuilt repo: {}", repo_path);
+        }
+        
         let selecter = version::VersionSelecter {
             expected_version: config.git.version.clone(),
             repo: repo_path.clone()
@@ -61,7 +62,12 @@ fn main() {
         let history = history_provider.provide();
         println!("Collected repo history: {}. Results: {:?}", repo_path, history);
 
-        result_string.push_str(&format!("{}\n release/{}\n {}\n", repo, next_version, history));
+        result_string.push_str(&format!("{}\nrelease/{}\n{}\n", repo, next_version, history));
+
+        if config.dry_run {
+            println!("Dry run mode. Skipping version update in repo: {}", repo_path);
+            continue;
+        }
 
         println!("Updating version in repo: {}", repo_path);
         let patcher = patcher::Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
@@ -71,9 +77,10 @@ fn main() {
         let replaced_stdout = std_out.replace("\n", "\n\t");
 
         results_hash.insert(repo, replaced_stdout);
+        println!("Updated version in repo: {}", repo_path);
     }
 
-    println!("Repos history logs: {}", result_string);
+    println!("Repos history logs:\n{}", result_string);
     println!("Repos PRs: {:#?}", results_hash);
     println!("Version updater finished!");
 }
