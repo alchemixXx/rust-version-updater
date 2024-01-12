@@ -1,75 +1,81 @@
-use serde_derive::Deserialize;
-use std::fs;
-use std::process::exit;
-use toml;
-
-
-const CONFIG_FILE: &str = "updater_config.toml";
-
-#[derive(Debug, Deserialize)]
-struct WorkersConfig {
-    node_workers: Box<[String]>,
-    python_workers: Box<[String]>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GitConfig {
-    version: String,
-    branch: String,
-}
-// Top level struct to hold the TOML data.
-#[derive(Debug, Deserialize)]
-struct Data {
-    git:GitConfig,
-    root: String,
-    repos: WorkersConfig,
-}
-
-impl WorkersConfig {
-    fn get_repos_list(&self) -> Vec<String> {
-        let mut repos = Vec::new();
-        for repo in self.node_workers.iter() {
-            repos.push(repo.to_string());
-        }
-        for repo in self.python_workers.iter() {
-            repos.push(repo.to_string());
-        }
-        repos
-    }
-}
+use std::collections::HashMap;
+use std::path::Path;
+use std::process::Output;
+mod version;
+mod config;
+mod branch;
+mod rebuilder;
+mod loginer;
+mod patcher;
+mod history;
 
 
 fn main() {
     println!("Hello, from batch version updater on rust!");
     println!("Starting version updater...");
-    let config = read_config();
+    let config = config::read_config();
 
     let repos = config.repos.get_repos_list();
     println!("Repos to update: {:#?}", repos);
-}
+
+    let mut result_string = String::new();
+
+    println!("Logging in to AWS...");
+    loginer::login(config.git.branch.clone());
+    println!("Logged in to AWS");
+
+    let mut results_hash: HashMap<&String, Output> = HashMap::new();
+
+    for repo in repos.iter() {
+        
+        println!("Getting repo type for repo: {}", repo);
+        let repo_type = config.repos.get_repo_type(repo);
+        println!("Got repo type for repo: {}.Type={:?}", repo, repo_type);
+        
+        let repo_path = Path::new(&config.root).join(&repo).to_str().expect("Cant't build path").to_string();
+        let switcher = branch::BranchSwitcher{target_branch:config.git.branch.to_string()};
+        
+        println!("Checking out to target branch for repo: {}", repo_path);
+        switcher.checkout_target_branch(&repo_path);
+        println!("Checked out to target branch for repo: {}", repo_path);
+
+        println!("Rebuilding repo: {}", repo_path);
+        let rebuilder = rebuilder::RepoRebuilder{repo:repo_path.clone(), repo_type:repo_type};
+        rebuilder.rebuild_repo();
+        println!("Rebuilt repo: {}", repo_path);
 
 
-fn read_config() -> Data {
-    println!("Reading config file: {}", CONFIG_FILE);
-    let contents = match fs::read_to_string(CONFIG_FILE) {
-        Ok(c) => c,
-        Err(_) => {
-            eprintln!("Could not read file `{}`", CONFIG_FILE);
-            exit(1);
-        }
-    };
 
-    let data: Data = match toml::from_str(&contents) {
-        Ok(d) => d,
-        Err(msg) => {
-            eprintln!("{}", msg);
-            eprintln!("Unable to load data from `{}`", CONFIG_FILE);
-            exit(1);
-        }
-    };
-
-    println!("Read config file: {}", CONFIG_FILE);
-    println!("{:#?}", data);
+        let selecter = version::VersionSelecter {
+            expected_version: config.git.version.clone(),
+            repo: repo_path.clone()
+        };
     
-    return data;
+        let (current_version, next_version) = selecter.get_version();
+        println!("Versions: current={}, next={}", current_version, next_version);
+
+        let history_provider = history::HistoryProvider{path:repo_path.clone()};
+
+        println!("Collecting repo history: {}", repo_path);
+        let history = history_provider.provide();
+        println!("Collected repo history: {}. Results: {:?}", repo_path, history);
+
+        result_string.push_str(&format!("{}\n release/{}\n {}\n", repo, next_version, history));
+
+        println!("Updating version in repo: {}", repo_path);
+        let patcher = patcher::Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
+
+        let result = patcher.update_version_in_repo();
+
+        results_hash.insert(repo, result);
+    }
+
+    println!("Repos history logs:: {:#?}", result_string);
+    println!("Repos PRs: {:#?}", results_hash);
+    println!("Version updater finished!");
 }
+
+
+
+
+
