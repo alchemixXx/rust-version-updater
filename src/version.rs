@@ -33,17 +33,17 @@ impl VersionSelecter {
         let last: char = current_version.chars().last().unwrap();
         println!("last character in the version: '{}'", last);
 
-    if last.is_ascii_alphabetic() && last != 'z' {
-        let next_letter = (last as u8 + 1) as char;
-        current_version.pop();
+        if last.is_ascii_alphabetic() && last != 'z' {
+            let next_letter = (last as u8 + 1) as char;
+            current_version.pop();
 
-        return format!("{}{}", current_version, next_letter);
-    } else if last == 'z' {
-        current_version.pop();
-        return  format!("{}aa", current_version);
-    } else {
-        return  format!("{}a", current_version);
-    }
+            return format!("{}{}", current_version, next_letter);
+        } else if last == 'z' {
+            current_version.pop();
+            return  format!("{}aa", current_version);
+        } else {
+            return  format!("{}a", current_version);
+        }
     }
 
     fn read_version_file(&self) -> String {
@@ -88,3 +88,50 @@ impl VersionSelecter {
     }
 }
 
+#[test]
+fn test_get_next_version_from_current_0_should_be_0a() {
+    let version_selecter = VersionSelecter {
+        expected_version: String::from(""),
+        repo: String::from("/path/to/repo"),
+    };
+
+    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0"));
+
+    assert_eq!(next_version, "1.0.0a");
+}
+
+#[test]
+fn test_get_next_version_from_current_0a_should_be_0b() {
+    let version_selecter = VersionSelecter {
+        expected_version: String::from(""),
+        repo: String::from("/path/to/repo"),
+    };
+
+    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0a"));
+
+    assert_eq!(next_version, "1.0.0b");
+}
+
+#[test]
+fn test_get_next_version_from_current_0z_should_be_0aa() {
+    let version_selecter = VersionSelecter {
+        expected_version: String::from(""),
+        repo: String::from("/path/to/repo"),
+    };
+
+    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0z"));
+
+    assert_eq!(next_version, "1.0.0aa");
+}
+
+#[test]
+fn test_get_next_version_from_current_0az_should_be_0aaa() {
+    let version_selecter = VersionSelecter {
+        expected_version: String::from(""),
+        repo: String::from("/path/to/repo"),
+    };
+
+    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0az"));
+
+    assert_eq!(next_version, "1.0.0aaa");
+}
