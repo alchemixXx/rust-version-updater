@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use std::path::Path;
-mod version;
 mod config;
-mod branch;
-mod rebuilder;
-mod loginer;
-mod patcher;
-mod history;
+mod workers;
+use workers::version::VersionSelecter;
+use workers::branch::BranchSwitcher;
+use workers::rebuilder::RepoRebuilder;
+use workers::loginer::login;
+use workers::patcher::Patcher;
+use workers::history::HistoryProvider;
 
 
 fn main() {
@@ -21,7 +22,7 @@ fn main() {
     result_string.push_str("\n");
 
     println!("Logging in to AWS...");
-    loginer::login(config.git.branch.clone());
+    login(config.git.branch.clone());
     println!("Logged in to AWS");
 
     let mut results_hash: HashMap<&String, String> = HashMap::new();
@@ -33,7 +34,7 @@ fn main() {
         println!("Got repo type for repo: {}.Type={:?}", repo, repo_type);
         
         let repo_path = Path::new(&config.root).join(&repo).to_str().expect("Cant't build path").to_string();
-        let switcher = branch::BranchSwitcher{target_branch:config.git.branch.to_string()};
+        let switcher = BranchSwitcher{target_branch:config.git.branch.to_string()};
         
         println!("Checking out to target branch for repo: {}", repo_path);
         switcher.checkout_target_branch(&repo_path);
@@ -43,12 +44,12 @@ fn main() {
             println!("Dry run mode. Skipping repo rebuild: {}", repo_path);
         } else {
             println!("Rebuilding repo: {}", repo_path);
-            let rebuilder = rebuilder::RepoRebuilder{repo:repo_path.clone(), repo_type:repo_type};
+            let rebuilder = RepoRebuilder{repo:repo_path.clone(), repo_type:repo_type};
             rebuilder.rebuild_repo();
             println!("Rebuilt repo: {}", repo_path);
         }
         
-        let selecter = version::VersionSelecter {
+        let selecter = VersionSelecter {
             expected_version: config.git.version.clone(),
             repo: repo_path.clone()
         };
@@ -56,7 +57,7 @@ fn main() {
         let (current_version, next_version) = selecter.get_version();
         println!("Versions: current={}, next={}", current_version, next_version);
 
-        let history_provider = history::HistoryProvider{path:repo_path.clone()};
+        let history_provider = HistoryProvider{path:repo_path.clone()};
 
         println!("Collecting repo history: {}", repo_path);
         let history = history_provider.provide();
@@ -70,7 +71,7 @@ fn main() {
         }
 
         println!("Updating version in repo: {}", repo_path);
-        let patcher = patcher::Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
+        let patcher = Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
 
         let result = patcher.update_version_in_repo();
         let std_out = String::from_utf8(result.stdout.clone()).expect("Cant't parse stdout");
