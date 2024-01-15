@@ -26,19 +26,8 @@ impl Patcher {
 
     fn patch_node(&self) -> Output {
         println!("Patching node repo: {}", self.path);
-        let last: char = self.current_version.chars().last().unwrap();
-        
-        if last.is_numeric(){
-            println!("Patching node repo by npm: {}", self.path);
-            self.up_npm_version();
-            println!("Patched node repo by npm: {}", self.path);
-        } else {
-            println!("Patching node repo by replacement: {}", self.path);
-            self.up_version_by_replacement(vec!["package.json".to_string(), "package-lock.json".to_string()]);
-            println!("Patched node repo by replacement: {}", self.path);
-        }
 
-
+        self.up_node_version();
         self.add_changes();
         self.commit_changes();
         self.add_tags();
@@ -55,10 +44,7 @@ impl Patcher {
     fn patch_python(&self) -> Output {
         println!("Patching python repo: {}", self.path);
 
-        println!("Patching python repo by replacement: {}", self.path);
-        self.up_version_by_replacement(vec!["version.json".to_string()]);
-        println!("Patched python repo by replacement: {}", self.path);
-
+        self.up_python_version();
         self.add_changes();
         self.commit_changes();
         self.add_tags();
@@ -71,29 +57,37 @@ impl Patcher {
         return pr_link;
     }
 
-    fn up_npm_version(&self) {
-        println!("Increasing version by npm: {}", self.path);
-        let output = Command::new("npm")
-            .arg("version")
-            .arg(&self.next_version)
-            .current_dir(&self.path)
-            .output()
-            .expect("Failed to execute npm command");
-        if !output.status.success() {
-            eprintln!("Failed increase version by npm in repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            panic!("Failed increase version by npm in repo");
-        }
+    fn up_node_version(&self){
+        println!("Updating version in package.json: {}", self.path);
+        self.up_version_by_replacement("package.json", 1);
+        println!("Updated version in package.json: {}", self.path);
+
+        println!("Updating version in package-lock.json: {}", self.path);
+        self.up_version_by_replacement("package-lock.json", 2);
+        println!("Updating version in package-lock.json: {}", self.path);
+
+        println!("Patched node repo by replacement: {}", self.path);
     }
 
-    fn up_version_by_replacement(&self, files: Vec<String>){
-        for file in files.iter() {
-            let path = Path::new(&self.path).join(file).to_str().expect("Can't find the target file").to_string();
-            let mut package_json_content = read_to_string(&path).expect("Failed to read files");
-            
-            package_json_content = package_json_content.replace(format!("\"version\": \"{}\"", &self.current_version).as_str(), format!("\"version\": \"{}\"", &self.next_version).as_str());
-            write(&path, package_json_content).expect("Failed to write files");
-        }
+    fn up_python_version(&self){
+        println!("Updating version in package.json: {}", self.path);
+        self.up_version_by_replacement("package.json", 1);
+        println!("Updated version in package.json: {}", self.path);
+
+        println!("Updating version in version.json: {}", self.path);
+        self.up_version_by_replacement("version.json", 1);
+        println!("Updating version in version.json: {}", self.path);
+
+        println!("Patched node repo by replacement: {}", self.path);
+    }
+
+
+    fn up_version_by_replacement(&self, file: &str, replacement_number: usize){
+        let path = Path::new(&self.path).join(file).to_str().expect("Can't find the target file").to_string();
+        let mut package_json_content = read_to_string(&path).expect("Failed to read files");
+        
+        package_json_content = package_json_content.replacen(format!("\"version\": \"{}\"", &self.current_version).as_str(), format!("\"version\": \"{}\"", &self.next_version).as_str(), replacement_number);
+        write(&path, package_json_content).expect("Failed to write files");
     }
 
     fn add_changes(&self) {
