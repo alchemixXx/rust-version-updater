@@ -22,7 +22,7 @@ fn main() {
     result_string.push_str("\n");
 
     println!("Logging in to AWS...");
-    login(config.git.branch.clone());
+    login(config.git.branch.clone(), &config.aws.role_script_path, &config.aws.role);
     println!("Logged in to AWS");
 
     let mut results_hash: HashMap<&String, String> = HashMap::new();

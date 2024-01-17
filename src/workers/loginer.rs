@@ -7,10 +7,11 @@ enum TargetConfig {
 }
 
 
-pub fn login(branch: String) {
+pub fn login(branch: String, script_path: &str, role:&str) {
     println!("Logging in");
     let target_config = get_target_config(&branch);
     login_to_aws(target_config);
+    switch_role(script_path, role);
     println!("Logged in");
 }
 
@@ -63,4 +64,20 @@ fn get_target_config(branch: &String) -> TargetConfig {
 
     eprintln!("Unknown branch: {}", branch);
     panic!("Unknown branch");
+}
+
+fn switch_role(script_path: &str, role:&str){
+    println!("Switching role");
+        let output = Command::new("zsh")
+        .arg("-c")
+        .arg(format!("source {0} -profile {1}", script_path, role))
+        .arg("-profile")
+        .arg("conform5-edetek-dev-01.conform5-batch-dev")
+        .output().expect("Failed to switch the aws role");
+    if !output.status.success() {
+        eprintln!("Failed to switch the aws role");
+        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+        panic!("Failed to switch the aws role");
+    }
+    println!("Switched role");
 }

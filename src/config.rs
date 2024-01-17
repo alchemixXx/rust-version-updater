@@ -19,10 +19,17 @@ pub struct GitConfig {
     pub branch: String,
     pub release_branch: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct AwsConfig {
+    pub role_script_path: String,
+    pub role: String
+}
 // Top level struct to hold the TOML data.
 #[derive(Debug, Deserialize)]
 pub struct Data {
     pub git:GitConfig,
+    pub aws:AwsConfig,
     pub root: String,
     pub version_update_required: bool,
     pub repo_rebuild_required: bool,

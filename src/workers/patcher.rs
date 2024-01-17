@@ -205,24 +205,4 @@ impl Patcher {
 
         return pr_link;
     }
-
-
-    // This method does not work yet
-    fn switch_role(&self){
-        println!("Switching role: {}", self.path);
-            let result = Command::new("sso")
-            .arg("-profile")
-            .arg("conform5-edetek-dev-01.conform5-batch-dev")
-            // .current_dir(&self.path)
-            .output();
-            // .expect("Failed to  switch the aws role");
-        println!("result: {:?}", result);
-        let output = result.expect("Failed to  switch the aws role");
-        if !output.status.success() {
-            eprintln!("Failed to switch the aws role: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-            panic!("Failed to switch the aws role");
-        }
-        println!("Switched role: {}", self.path);
-    }
 }
