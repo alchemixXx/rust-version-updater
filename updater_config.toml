@@ -1,5 +1,6 @@
 root = "/home/al/01_personal_docs/EDETEK/repos/"
-dry_run = true  # true | false
+version_update_required = true  # true | false
+repo_rebuild_required = true  # true | false
 
 # version that should be set to the package on specific branch
 [git]
@@ -9,25 +10,26 @@ release_branch = "5.9_RELEASE"  # "5.9_RELEASE" | "5.8_RELEASE"
 
 [repos]
 node_workers = [
-  'conform5-bpo-api',
-  'conform5-bxp-api',
-  'conform5-dvw-api',
-  'conform5-lambda-batch-audit',
-  'conform5-lambda-batch-data-validation-worker',
-  'conform5-lambda-batch-define-xml-validator',
-  'conform5-lambda-batch-issue-load-worker',
-  'conform5-lambda-batch-issues-report-generator',
-  'conform5-lambda-batch-load-worker',
-  'conform5-lambda-batch-parsing-worker',
-  'conform5-lambda-batch-sdtm-validation',
-  'conform5-lambda-batch-standard-merger',
+  # 'conform5-bpo-api',
+  # 'conform5-bxp-api',
+  # 'conform5-dvw-api',
+  # 'conform5-lambda-batch-audit',
+  # 'conform5-lambda-batch-data-validation-worker',
+  # 'conform5-lambda-batch-define-xml-validator',
+  # 'conform5-lambda-batch-issue-load-worker',
+  # 'conform5-lambda-batch-issues-report-generator',
+  # 'conform5-lambda-batch-load-worker',
+  # 'conform5-lambda-batch-parsing-worker',
+  # 'conform5-lambda-batch-sdtm-validation',
+  # 'conform5-lambda-batch-standard-merger',
   'conform5-cb-rule-templates',
-  'conform5-lambda-batch-transformation-worker',
+  # 'conform5-lambda-batch-transformation-worker',
+  # 'conform5-batch-initiator-user-id-population',
 ]
 
 python_workers = [
-  'conform5-lambda-batch-vr-python-custom-code',
-  'conform5-lambda-batch-mt-python-custom-code',
+  # 'conform5-lambda-batch-vr-python-custom-code',
+  # 'conform5-lambda-batch-mt-python-custom-code',
 ]
 
 

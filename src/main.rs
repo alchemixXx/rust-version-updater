@@ -40,13 +40,13 @@ fn main() {
         switcher.checkout_target_branch(&repo_path);
         println!("Checked out to target branch for repo: {}", repo_path);
 
-        if config.dry_run {
-            println!("Dry run mode. Skipping repo rebuild: {}", repo_path);
-        } else {
+        if config.repo_rebuild_required {
             println!("Rebuilding repo: {}", repo_path);
             let rebuilder = RepoRebuilder{repo:repo_path.clone(), repo_type:repo_type};
             rebuilder.rebuild_repo();
             println!("Rebuilt repo: {}", repo_path);
+        } else {
+            println!("Dry run mode. Skipping repo rebuild: {}", repo_path);
         }
         
         let selecter = VersionSelecter {
@@ -65,19 +65,17 @@ fn main() {
 
         result_string.push_str(&format!("{}\nrelease/{}\n{}\n", repo, next_version, history));
 
-        if config.dry_run {
+        if !config.version_update_required {
             println!("Dry run mode. Skipping version update in repo: {}", repo_path);
             continue;
         }
 
         println!("Updating version in repo: {}", repo_path);
-        let patcher = Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone()};
+        let patcher = Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone(), repo_name:repo.clone()};
 
         let result = patcher.update_version_in_repo();
-        let std_out = String::from_utf8(result.stdout.clone()).expect("Cant't parse stdout");
-        let replaced_stdout = std_out.replace("\n", "\n\t");
 
-        results_hash.insert(repo, replaced_stdout);
+        results_hash.insert(repo, result);
         println!("Updated version in repo: {}", repo_path);
     }
 

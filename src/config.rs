@@ -24,7 +24,8 @@ pub struct GitConfig {
 pub struct Data {
     pub git:GitConfig,
     pub root: String,
-    pub dry_run: bool,
+    pub version_update_required: bool,
+    pub repo_rebuild_required: bool,
     pub repos: WorkersConfig,
 }
 

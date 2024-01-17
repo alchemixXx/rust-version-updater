@@ -1,11 +1,26 @@
+use serde_derive::{Serialize, Deserialize};
 use crate::config::RepoType;
 use std::fs::{read_to_string, write};
 use std::path::Path;
-use std::process::{Command, Output};
+use std::process::Command;
+
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Commit {
+    pull_request: PullRequest,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PullRequest {
+    pull_request_id: String,
+}
+
 
 pub struct Patcher {
     pub next_version: String,
     pub current_version: String,
+    pub repo_name: String,
     pub path: String,
     pub repo_type: RepoType,
     pub branch: String,
@@ -13,47 +28,24 @@ pub struct Patcher {
 }
 
 impl Patcher {
-    pub fn update_version_in_repo(&self) -> Output{
+    pub fn update_version_in_repo(&self) -> String {
         println!("Updating version in repo: {}", self.path);
-        let result = match self.repo_type {
-            RepoType::Node => self.patch_node(),
-            RepoType::Python => self.patch_python()
+        
+        match self.repo_type {
+            RepoType::Node => self.up_node_version(),
+            RepoType::Python => self.up_python_version()
         };
-        println!("Updated version in repo: {}. New version is: {}", self.path, self.next_version);
 
-        return result;
-    }
-
-    fn patch_node(&self) -> Output {
-        println!("Patching node repo: {}", self.path);
-
-        self.up_node_version();
         self.add_changes();
         self.commit_changes();
         self.add_tags();
         self.push_to_origin();
         self.push_to_tags();
-        let pr_link: Output = self.create_pr();
+        let pr_link = self.create_pr();
 
 
-        println!("Patched node repo: {}. PR: {:?}", self.path, pr_link);
 
-        return pr_link
-    }
-
-    fn patch_python(&self) -> Output {
-        println!("Patching python repo: {}", self.path);
-
-        self.up_python_version();
-        self.add_changes();
-        self.commit_changes();
-        self.add_tags();
-        self.push_to_origin();
-        self.push_to_tags();
-        let pr_link: Output = self.create_pr();
-
-        println!("Patched python repo: {}. PR: {:?}", self.path, pr_link);
-
+        println!("Updated version in repo: {0}. New version is: {1}, PR: {2:?}", self.path,self.next_version, pr_link);
         return pr_link;
     }
 
@@ -183,24 +175,54 @@ impl Patcher {
         println!("Pushed tags to git origin: {}", self.path);
     }
 
-    fn create_pr(&self) -> Output {
+    fn create_pr(&self) -> String {
         println!("Creating PR in AWS: {}", self.path);
-        let output = Command::new("drunx")
-            .arg("aws")
-            .arg("pr")
-            .arg(&self.branch)
-            .arg(&self.release_branch)
+        let output = Command::new("aws")
+            .arg("codecommit")
+            .arg("create-pull-request")
+            .arg("--title")
             .arg(format!("'CDA Artifact {}'", self.next_version))
+            .arg("--targets")
+            .arg(format!("repositoryName={},sourceReference={},destinationReference={}", self.repo_name, self.branch, self.release_branch))
             .current_dir(&self.path)
             .output()
-            .expect("Failed to execute git command");
+            .expect("Failed to execute PR creation command");
         if !output.status.success() {
             eprintln!("Failed to create PR for repo: {}", self.path);
             eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
             panic!("Failed to create PR for repo");
         }
-        println!("Created PR in AWS: {}", self.path);
 
-        return output;
+        let str_json = String::from_utf8(output.stdout).expect("Failed to parse stdout");
+        let commit:Commit = serde_json::from_str(&str_json).expect("Failed to parse json");
+
+        let pr_link = format!(
+            "https://console.aws.amazon.com/codesuite/codecommit/repositories/{}/pull-requests/{}/details?region=us-east-1",
+            self.repo_name,
+            commit.pull_request.pull_request_id
+        );
+        println!("Created PR in AWS: {}, PR: {}", self.path, pr_link);
+
+        return pr_link;
+    }
+
+
+    // This method does not work yet
+    fn switch_role(&self){
+        println!("Switching role: {}", self.path);
+            let result = Command::new("sso")
+            .arg("-profile")
+            .arg("conform5-edetek-dev-01.conform5-batch-dev")
+            // .current_dir(&self.path)
+            .output();
+            // .expect("Failed to  switch the aws role");
+        println!("result: {:?}", result);
+        let output = result.expect("Failed to  switch the aws role");
+        if !output.status.success() {
+            eprintln!("Failed to switch the aws role: {}", self.path);
+            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            panic!("Failed to switch the aws role");
+        }
+        println!("Switched role: {}", self.path);
     }
 }

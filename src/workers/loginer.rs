@@ -23,23 +23,10 @@ fn login_to_aws(target_config: TargetConfig){
         TargetConfig::CodeBuild(profile) => {
             println!("Logging in to CodeBuild");
             use_target_config(&profile);
-            let output = Command::new("aws")
-                .arg("codeartifact")
+            let output = Command::new("aws-sso-util")
                 .arg("login")
-                .arg("--tool")
-                .arg("npm")
-                .arg("--domain")
-                .arg("conform")
-                .arg("--domain-owner")
-                .arg("022587608743")
-                .arg("--profile")
-                .arg("conform5-code-artifacts-read-role")
-                .arg("--region")
-                .arg("us-east-1")
-                .arg("--repository")
-                .arg("conform5-npm-common")
                 .output()
-                .expect("Failed to execute git command");
+                .expect("Failed to execute aws login command");
             if !output.status.success() {
                 eprintln!("Failed to login to AWS");
                 eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
