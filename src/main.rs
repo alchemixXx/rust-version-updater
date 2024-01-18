@@ -42,7 +42,10 @@ fn main() {
 
         if config.repo_rebuild_required {
             println!("Rebuilding repo: {}", repo_path);
-            let rebuilder = RepoRebuilder{repo:repo_path.clone(), repo_type:repo_type};
+            let rebuilder = RepoRebuilder{
+                repo:repo_path.clone(), 
+                repo_type:repo_type
+            };
             rebuilder.rebuild_repo();
             println!("Rebuilt repo: {}", repo_path);
         } else {
@@ -57,7 +60,7 @@ fn main() {
         let (current_version, next_version) = selecter.get_version();
         println!("Versions: current={}, next={}", current_version, next_version);
 
-        let history_provider = HistoryProvider{path:repo_path.clone()};
+        let history_provider = HistoryProvider{ path:repo_path.clone() };
 
         println!("Collecting repo history: {}", repo_path);
         let history = history_provider.provide();
@@ -71,7 +74,17 @@ fn main() {
         }
 
         println!("Updating version in repo: {}", repo_path);
-        let patcher = Patcher{next_version, current_version, path:repo_path.clone(), repo_type:config.repos.get_repo_type(repo), branch:config.git.branch.clone(), release_branch:config.git.release_branch.clone(), repo_name:repo.clone()};
+        let patcher = Patcher{
+            next_version, 
+            current_version, 
+            path:repo_path.clone(), 
+            repo_type:config.repos.get_repo_type(repo), 
+            branch:config.git.branch.clone(), 
+            release_branch:config.git.release_branch.clone(), 
+            repo_name:repo.clone(), 
+            role:config.aws.role.clone(),
+            sso_script_path:config.aws.role_script_path.clone()
+        };
 
         let result = patcher.update_version_in_repo();
 

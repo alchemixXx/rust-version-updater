@@ -1,12 +1,16 @@
 root = "/home/al/01_personal_docs/EDETEK/repos/"
-version_update_required = false  # true | false
+version_update_required = true  # true | false
 repo_rebuild_required = true  # true | false
 
 # version that should be set to the package on specific branch
 [git]
 version = "" # 5.8.19a or "" for autodetect
-branch = "dev-59"  # "dev-59" | "next"
-release_branch = "5.9_RELEASE"  # "5.9_RELEASE" | "5.8_RELEASE"
+# branch: "dev-59" | "next"
+# release_branch: "5.9_RELEASE" | "5.8_RELEASE"
+branch = "dev-59"
+release_branch = "5.9_RELEASE"  
+# branch = "next"
+# release_branch = "5.8_RELEASE"
 
 [aws]
 role_script_path="/home/al/01_personal_docs/EDETEK/script/sso.zsh"
@@ -14,7 +18,7 @@ role="conform5-edetek-dev-01.conform5-batch-dev"
 
 [repos]
 node_workers = [
-  # 'conform5-bpo-api',
+  'conform5-bpo-api',
   # 'conform5-bxp-api',
   # 'conform5-dvw-api',
   # 'conform5-lambda-batch-audit',
@@ -28,7 +32,7 @@ node_workers = [
   # 'conform5-lambda-batch-standard-merger',
   # 'conform5-cb-rule-templates',
   # 'conform5-lambda-batch-transformation-worker',
-  'conform5-batch-initiator-user-id-population',
+  # 'conform5-batch-initiator-user-id-population',
 ]
 
 python_workers = [
