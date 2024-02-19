@@ -17,6 +17,7 @@ fn login_to_aws(target_config: TargetConfig) {
     match target_config {
         TargetConfig::JFrog(profile) => {
             use_target_config(&profile);
+            generate_npm_token();
         }
 
         TargetConfig::CodeBuild(profile) => {
