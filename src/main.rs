@@ -76,6 +76,9 @@ fn main() {
         println!("Collected repo history: {}. Results: {:?}", repo_path, history);
 
         result_string.push_str(&format!("{}\nrelease/{}\n{}\n", repo, next_version, history));
+        println!("\n\n{}", repo);
+        println!("release/{}", next_version);
+        println!("{}", history);
 
         if !config.version_update_required {
             println!("Dry run mode. Skipping version update in repo: {}", repo_path);
@@ -96,6 +99,7 @@ fn main() {
         };
 
         let result = patcher.update_version_in_repo();
+        println!("{}\n\n", result);
 
         results_hash.insert(repo, result);
         println!("Updated version in repo: {}", repo_path);
