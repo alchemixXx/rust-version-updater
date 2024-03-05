@@ -28,7 +28,7 @@ fn main() {
     result_string.push_str("\n");
 
     println!("Logging in to AWS...");
-    login(config.git.branch.clone(), &config.aws.role_script_path, &config.aws.role);
+    login(&config.git.branch, &config.aws.role_script_path, &config.aws.role);
     println!("Logged in to AWS");
 
     let mut results_hash: HashMap<&String, String> = HashMap::new();
@@ -43,7 +43,7 @@ fn main() {
             .to_str()
             .expect("Cant't build path")
             .to_string();
-        let switcher = BranchSwitcher { target_branch: config.git.branch.to_string() };
+        let switcher = BranchSwitcher { target_branch: &config.git.branch };
 
         println!("Checking out to target branch for repo: {}", repo_path);
         switcher.checkout_target_branch(&repo_path);
@@ -52,8 +52,8 @@ fn main() {
         if config.repo_rebuild_required {
             println!("Rebuilding repo: {}", repo_path);
             let rebuilder = RepoRebuilder {
-                repo: repo_path.clone(),
-                repo_type: repo_type,
+                repo: &repo_path,
+                repo_type,
             };
             rebuilder.rebuild_repo();
             println!("Rebuilt repo: {}", repo_path);
@@ -62,14 +62,14 @@ fn main() {
         }
 
         let selecter = VersionSelecter {
-            expected_version: config.git.version.clone(),
-            repo: repo_path.clone(),
+            expected_version: &config.git.version,
+            repo: &repo_path,
         };
 
         let (current_version, next_version) = selecter.get_version();
         println!("Versions: current={}, next={}", current_version, next_version);
 
-        let history_provider = HistoryProvider { path: repo_path.clone() };
+        let history_provider = HistoryProvider { path: &repo_path };
 
         println!("Collecting repo history: {}", repo_path);
         let history = history_provider.provide();
@@ -89,13 +89,13 @@ fn main() {
         let patcher = Patcher {
             next_version,
             current_version,
-            path: repo_path.clone(),
+            path: &repo_path,
             repo_type: config.repos.get_repo_type(repo),
-            branch: config.git.branch.clone(),
-            release_branch: config.git.release_branch.clone(),
-            repo_name: repo.clone(),
-            role: config.aws.role.clone(),
-            sso_script_path: config.aws.role_script_path.clone(),
+            branch: &config.git.branch,
+            release_branch: &config.git.release_branch,
+            repo_name: repo,
+            role: &config.aws.role,
+            sso_script_path: &config.aws.role_script_path,
         };
 
         let result = patcher.update_version_in_repo();

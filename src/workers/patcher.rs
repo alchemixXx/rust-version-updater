@@ -16,19 +16,19 @@ struct PullRequest {
     pull_request_id: String,
 }
 
-pub struct Patcher {
+pub struct Patcher<'repo> {
     pub next_version: String,
     pub current_version: String,
-    pub repo_name: String,
-    pub path: String,
+    pub repo_name: &'repo String,
+    pub path: &'repo String,
     pub repo_type: RepoType,
-    pub branch: String,
-    pub release_branch: String,
-    pub role: String,
-    pub sso_script_path: String,
+    pub branch: &'repo String,
+    pub release_branch: &'repo String,
+    pub role: &'repo String,
+    pub sso_script_path: &'repo String,
 }
 
-impl Patcher {
+impl<'repo> Patcher<'repo> {
     pub fn update_version_in_repo(&self) -> String {
         println!("Updating version in repo: {}", self.path);
 

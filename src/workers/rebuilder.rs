@@ -2,31 +2,31 @@ use std::process::Command;
 
 use crate::config::RepoType;
 
-pub struct RepoRebuilder{
-    pub repo: String,
+pub struct RepoRebuilder<'repo> {
+    pub repo: &'repo String,
     pub repo_type: RepoType,
 }
 
-impl RepoRebuilder {
+impl<'repo> RepoRebuilder<'repo> {
     pub fn rebuild_repo(&self) {
         println!("Rebuilding repo: {}", self.repo);
         match self.repo_type {
             RepoType::Node => {
                 self.rebuild_node_repo();
-            },
+            }
             RepoType::Python => {
                 println!("Nothing to rebuild in repo='{}'", self.repo);
             }
         }
     }
 
-    fn rebuild_node_repo(&self){
+    fn rebuild_node_repo(&self) {
         self.delete_folders();
         self.install_npm_packages();
         self.build_node_repo();
     }
 
-    fn delete_folders(&self){
+    fn delete_folders(&self) {
         println!("Deleting node_modules and dist folders");
         let output = Command::new("rm")
             .arg("-rf")
@@ -41,7 +41,7 @@ impl RepoRebuilder {
         println!("Deleted node_modules and dis folders");
     }
 
-    fn install_npm_packages(&self){
+    fn install_npm_packages(&self) {
         println!("Installing packages");
         let output = Command::new("npm")
             .arg("install")
@@ -56,7 +56,7 @@ impl RepoRebuilder {
         println!("Installed packages");
     }
 
-    fn build_node_repo(&self){
+    fn build_node_repo(&self) {
         println!("Building node repo");
         let output = Command::new("npm")
             .arg("run")
