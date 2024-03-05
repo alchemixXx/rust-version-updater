@@ -1,14 +1,13 @@
 use std::process::Command;
-pub struct HistoryProvider{
-    pub path: String,
+pub struct HistoryProvider<'repo> {
+    pub path: &'repo String,
 }
 
-impl HistoryProvider {
-    pub fn provide(&self) -> String{
+impl<'repo> HistoryProvider<'repo> {
+    pub fn provide(&self) -> String {
         println!("Calculating difference for repo: {}", self.path);
         let history_string = self.get_git_history_as_string();
         println!("Calculated difference for repo: {}", self.path);
-
 
         println!("Generating history for repo: {}", self.path);
         let result = self.generate_git_history_string(history_string);
@@ -17,7 +16,7 @@ impl HistoryProvider {
         return result;
     }
 
-    fn generate_git_history_string(&self, history: String) -> String{
+    fn generate_git_history_string(&self, history: String) -> String {
         let mut target = String::new();
         let parts = history.split("\n");
 
@@ -26,12 +25,12 @@ impl HistoryProvider {
             if trimmed.starts_with("release/") || trimmed.starts_with("@") {
                 return target;
             }
-            
+
             target.push_str(&trimmed);
             target.push_str("\n");
         }
 
-        return  target
+        return target;
     }
 
     fn get_git_history_as_string(&self) -> String {

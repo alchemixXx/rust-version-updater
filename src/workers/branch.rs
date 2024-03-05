@@ -1,16 +1,15 @@
 use std::process::Command;
 
-pub struct BranchSwitcher {
-    pub target_branch: String,
+pub struct BranchSwitcher<'branch> {
+    pub target_branch: &'branch String,
 }
 
-impl BranchSwitcher {
+impl<'branch> BranchSwitcher<'branch> {
     pub fn checkout_target_branch(&self, repo_path: &str) {
         self.stash_repo(repo_path);
         self.fetch_repo(repo_path);
         self.switch_branch(repo_path);
         self.hard_reset_branch(repo_path);
-
     }
 
     fn hard_reset_branch(&self, repo_path: &str) {
@@ -43,7 +42,6 @@ impl BranchSwitcher {
         }
     }
 
-
     fn fetch_repo(&self, repo_path: &str) {
         println!("Fetching repo: {}", repo_path);
         let output = Command::new("git")
@@ -73,4 +71,3 @@ impl BranchSwitcher {
         }
     }
 }
-

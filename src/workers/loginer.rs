@@ -5,9 +5,9 @@ enum TargetConfig {
     CodeBuild(String),
 }
 
-pub fn login(branch: String, script_path: &str, role: &str) {
+pub fn login(branch: &str, script_path: &str, role: &str) {
     println!("Logging in");
-    let target_config = get_target_config(&branch);
+    let target_config = get_target_config(branch);
     login_to_aws(target_config);
     switch_role(script_path, role);
     println!("Logged in");
@@ -43,7 +43,7 @@ fn use_target_config(target_config: &String) {
     println!("Used target config");
 }
 
-fn get_target_config(branch: &String) -> TargetConfig {
+fn get_target_config(branch: &str) -> TargetConfig {
     if branch == "next" {
         return TargetConfig::JFrog("jfrog".to_string());
     }
