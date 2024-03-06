@@ -52,6 +52,10 @@ fn get_target_config(branch: &str) -> TargetConfig {
         return TargetConfig::CodeBuild("codebuild".to_string());
     }
 
+    if branch == "dev-510-batch" {
+        return TargetConfig::CodeBuild("codebuild".to_string());
+    }
+
     eprintln!("Unknown branch: {}", branch);
     panic!("Unknown branch");
 }
