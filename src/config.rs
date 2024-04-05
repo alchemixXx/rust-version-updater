@@ -29,6 +29,7 @@ pub struct Data {
     pub root: String,
     pub version_update_required: bool,
     pub repo_rebuild_required: bool,
+    pub process_only_updated_repo: bool,
     pub repos: WorkersConfig,
 }
 

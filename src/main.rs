@@ -49,6 +49,16 @@ fn main() {
         switcher.checkout_target_branch(&repo_path);
         println!("Checked out to target branch for repo: {}", repo_path);
 
+        let history_provider = HistoryProvider { path: &repo_path };
+        println!("Collecting repo history: {}", repo_path);
+        let history = history_provider.provide();
+        println!("Collected repo history: {}. Results: {:?}", repo_path, history);
+
+        if config.process_only_updated_repo && history.is_empty() {
+            println!("Skipping repo: {}. No history found\n\n", repo_path);
+            continue;
+        }
+
         if config.repo_rebuild_required {
             println!("Rebuilding repo: {}", repo_path);
             let rebuilder = RepoRebuilder {
@@ -68,12 +78,6 @@ fn main() {
 
         let (current_version, next_version) = selecter.get_version();
         println!("Versions: current={}, next={}", current_version, next_version);
-
-        let history_provider = HistoryProvider { path: &repo_path };
-
-        println!("Collecting repo history: {}", repo_path);
-        let history = history_provider.provide();
-        println!("Collected repo history: {}. Results: {:?}", repo_path, history);
 
         result_string.push_str(&format!("{}\nrelease/{}\n{}\n", repo, next_version, history));
         println!("\n\n{}", repo);
