@@ -11,7 +11,7 @@ pub struct WorkersConfig {
 
 #[derive(Debug, Deserialize)]
 pub struct GitConfig {
-    pub version: String,
+    pub version: Option<String>,
     pub branch: String,
     pub release_branch: String,
 }

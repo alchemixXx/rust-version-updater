@@ -5,7 +5,7 @@ process_only_updated_repo = true  # true | false
 
 # version that should be set to the package on specific branch
 [git]
-version = "1.2.3" # 1.2.3a or "" for autodetect
+version = "5.9.25" # 5.8.19a or comment for autodetect
 branch = "source_branch_here"
 release_branch = "release_branch_here"
 

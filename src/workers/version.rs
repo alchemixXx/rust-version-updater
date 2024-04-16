@@ -5,7 +5,7 @@ use std::path::Path;
 const VERSION_FILES: [&str; 2] = ["package.json", "version.json"];
 
 pub struct VersionSelecter<'repo> {
-    pub expected_version: &'repo String,
+    pub expected_version: &'repo Option<String>,
     pub repo: &'repo String,
 }
 
@@ -15,16 +15,19 @@ impl<'repo> VersionSelecter<'repo> {
         let current_version = self.read_version_file();
         println!("Got current version: {}", current_version);
 
-        if self.expected_version.is_empty() {
-            println!("Expected version is empty. Getting current version from file...");
+        match self.expected_version {
+            Some(expected_version) => {
+                return (current_version, expected_version.clone());
+            }
+            None => {
+                println!("Expected version is empty. Getting current version from file...");
 
-            let next_version = self.get_next_version_from_current(current_version.clone());
-            println!("Got next version: {}", next_version);
+                let next_version = self.get_next_version_from_current(current_version.clone());
+                println!("Got next version: {}", next_version);
 
-            return (current_version, next_version);
+                return (current_version, next_version);
+            }
         }
-
-        return (current_version, self.expected_version.clone());
     }
 
     fn get_next_version_from_current(&self, mut current_version: String) -> String {
@@ -90,7 +93,7 @@ impl<'repo> VersionSelecter<'repo> {
 #[test]
 fn test_get_next_version_from_current_0_should_be_0a() {
     let version_selecter = VersionSelecter {
-        expected_version: &String::from(""),
+        expected_version: &None,
         repo: &String::from("/path/to/repo"),
     };
 
@@ -102,7 +105,7 @@ fn test_get_next_version_from_current_0_should_be_0a() {
 #[test]
 fn test_get_next_version_from_current_0a_should_be_0b() {
     let version_selecter = VersionSelecter {
-        expected_version: &String::from(""),
+        expected_version: &None,
         repo: &String::from("/path/to/repo"),
     };
 
@@ -114,7 +117,7 @@ fn test_get_next_version_from_current_0a_should_be_0b() {
 #[test]
 fn test_get_next_version_from_current_0z_should_be_0aa() {
     let version_selecter = VersionSelecter {
-        expected_version: &String::from(""),
+        expected_version: &None,
         repo: &String::from("/path/to/repo"),
     };
 
@@ -126,7 +129,7 @@ fn test_get_next_version_from_current_0z_should_be_0aa() {
 #[test]
 fn test_get_next_version_from_current_0az_should_be_0aaa() {
     let version_selecter = VersionSelecter {
-        expected_version: &String::from(""),
+        expected_version: &None,
         repo: &String::from("/path/to/repo"),
     };
 
