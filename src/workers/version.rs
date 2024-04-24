@@ -2,6 +2,8 @@ use serde_json;
 use std::fs;
 use std::path::Path;
 
+use crate::logger::LoggerTrait;
+
 const VERSION_FILES: [&str; 2] = ["package.json", "version.json"];
 
 pub struct VersionSelecter<'repo> {
@@ -9,21 +11,27 @@ pub struct VersionSelecter<'repo> {
     pub repo: &'repo String,
 }
 
+impl<'config> LoggerTrait for VersionSelecter<'config> {}
 impl<'repo> VersionSelecter<'repo> {
     pub fn get_version(&self) -> (String, String) {
-        println!("Getting current version...");
+        let logger = self.get_logger();
+        logger.debug(format!("Getting current version...").as_str());
         let current_version = self.read_version_file();
-        println!("Got current version: {}", current_version);
+        logger.debug(format!("Got current version: {}", current_version).as_str());
 
         match self.expected_version {
             Some(expected_version) => {
                 return (current_version, expected_version.clone());
             }
             None => {
-                println!("Expected version is empty. Getting current version from file...");
+                logger.debug(
+                    format!(
+                        "Expected version is empty. Getting current version from file..."
+                    ).as_str()
+                );
 
                 let next_version = self.get_next_version_from_current(current_version.clone());
-                println!("Got next version: {}", next_version);
+                logger.debug(format!("Got next version: {}", next_version).as_str());
 
                 return (current_version, next_version);
             }
@@ -31,8 +39,9 @@ impl<'repo> VersionSelecter<'repo> {
     }
 
     fn get_next_version_from_current(&self, mut current_version: String) -> String {
+        let logger = self.get_logger();
         let last: char = current_version.chars().last().unwrap();
-        println!("last character in the version: '{}'", last);
+        logger.debug(format!("last character in the version: '{}'", last).as_str());
 
         if last.is_ascii_alphabetic() && last != 'z' {
             let next_letter = ((last as u8) + 1) as char;
@@ -48,6 +57,7 @@ impl<'repo> VersionSelecter<'repo> {
     }
 
     fn read_version_file(&self) -> String {
+        let logger = self.get_logger();
         for version_file in VERSION_FILES.iter() {
             let path = self.get_version_path(version_file);
             match fs::read_to_string(path) {
@@ -64,28 +74,33 @@ impl<'repo> VersionSelecter<'repo> {
                     }
 
                     if version == "null" || version.is_empty() || version == "0.0.0" {
-                        eprintln!("Version is empty in file `{}`", version_file);
+                        logger.error(
+                            format!("Version is empty in file `{}`", version_file).as_str()
+                        );
                         continue;
                     }
-                    println!("Got current version: {}", version);
+                    logger.debug(format!("Got current version: {}", version).as_str());
                     return version;
                 }
                 Err(_) => {
-                    eprintln!("Could not read file `{}`", version_file);
+                    logger.error(format!("Could not read file `{}`", version_file).as_str());
                 }
             };
         }
-        eprintln!("Could not get version from any of the files `{:?}`", VERSION_FILES);
+        logger.error(
+            format!("Could not get version from any of the files `{:?}`", VERSION_FILES).as_str()
+        );
         panic!("Could not get version from any of the files");
     }
 
     fn get_version_path(&self, file_name: &str) -> String {
+        let logger = self.get_logger();
         let path = Path::new(&self.repo).join(file_name);
         let path = path
             .to_str()
             .expect(format!("Can't build path: {}, {}", self.repo, file_name).as_str())
             .to_string();
-        println!("Path: {}", path);
+        logger.debug(format!("Path: {}", path).as_str());
         path
     }
 }

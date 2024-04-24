@@ -3,6 +3,8 @@ use serde_derive::Deserialize;
 use std::fs;
 use toml;
 
+use crate::logger::LogLevel;
+
 #[derive(Debug, Deserialize)]
 pub struct WorkersConfig {
     node_workers: Box<[String]>,
@@ -21,6 +23,11 @@ pub struct AwsConfig {
     pub role_script_path: String,
     pub role: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct LoggerConfig {
+    pub log_level: LogLevel,
+}
 // Top level struct to hold the TOML data.
 #[derive(Debug, Deserialize)]
 pub struct Data {
@@ -31,6 +38,7 @@ pub struct Data {
     pub repo_rebuild_required: bool,
     pub process_only_updated_repo: bool,
     pub repos: WorkersConfig,
+    pub logger: LoggerConfig,
 }
 
 #[derive(Debug)]
@@ -74,8 +82,7 @@ pub fn read_config(path: &str) -> Data {
     let data: Data = toml
         ::from_str(&contents)
         .expect(format!("Unable to load data from `{}`", path).as_str());
-    println!("Read config file: {}", path);
-    println!("{:#?}", data);
+    println!("Read config file: {}. {:#?}", path, data);
 
     data
 }

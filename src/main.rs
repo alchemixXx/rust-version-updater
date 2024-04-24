@@ -4,6 +4,7 @@ use std::path::Path;
 mod config;
 mod workers;
 mod cli;
+mod logger;
 use cli::CLi;
 use workers::version::VersionSelecter;
 use workers::branch::BranchSwitcher;
@@ -13,30 +14,31 @@ use workers::patcher::Patcher;
 use workers::history::HistoryProvider;
 
 fn main() {
-    println!("Hello, from batch version updater on rust!");
-    println!("Starting version updater...");
-
     println!("Reading cli args...");
     let cli_args = CLi::parse();
     println!("CLI args: {:#?}", cli_args);
 
     let config = config::read_config(&cli_args.path);
+
+    crate::logger::Logger::init(config.logger.log_level);
+    let logger = crate::logger::Logger::new();
+    logger.info(format!("Version updater started!").as_str());
     let repos = config.repos.get_repos_list();
-    println!("Repos to update: {:#?}", repos);
+    logger.info(format!("Repos to update: {:#?}", repos).as_str());
 
     let mut result_string = String::new();
     result_string.push_str("\n");
 
-    println!("Logging in to AWS...");
+    logger.debug("Logging in to AWS...");
     login(&config.git.branch, &config.aws.role_script_path, &config.aws.role);
-    println!("Logged in to AWS");
+    logger.debug("Logged in to AWS");
 
     let mut results_hash: HashMap<&String, String> = HashMap::new();
 
     for repo in repos.iter() {
-        println!("Getting repo type for repo: {}", repo);
+        logger.debug(format!("Getting repo type for repo: {}", repo).as_str());
         let repo_type = config.repos.get_repo_type(repo);
-        println!("Got repo type for repo: {}.Type={:?}", repo, repo_type);
+        logger.debug(format!("Got repo type for repo: {}.Type={:?}", repo, repo_type).as_str());
 
         let repo_path = Path::new(&config.root)
             .join(&repo)
@@ -45,30 +47,32 @@ fn main() {
             .to_string();
         let switcher = BranchSwitcher { target_branch: &config.git.branch };
 
-        println!("Checking out to target branch for repo: {}", repo_path);
+        logger.debug(format!("Checking out to target branch for repo: {}", repo_path).as_str());
         switcher.checkout_target_branch(&repo_path);
-        println!("Checked out to target branch for repo: {}", repo_path);
+        logger.debug(format!("Checked out to target branch for repo: {}", repo_path).as_str());
 
         let history_provider = HistoryProvider { path: &repo_path };
-        println!("Collecting repo history: {}", repo_path);
+        logger.debug(format!("Collecting repo history: {}", repo_path).as_str());
         let history = history_provider.provide();
-        println!("Collected repo history: {}. Results: {:?}", repo_path, history);
+        logger.debug(
+            format!("Collected repo history: {}. Results: {:?}", repo_path, history).as_str()
+        );
 
         if config.process_only_updated_repo && history.is_empty() {
-            println!("Skipping repo: {}. No history found\n\n", repo_path);
+            logger.warn(format!("Skipping repo: {}. No history found\n\n", repo_path).as_str());
             continue;
         }
 
         if config.repo_rebuild_required {
-            println!("Rebuilding repo: {}", repo_path);
+            logger.debug(format!("Rebuilding repo: {}", repo_path).as_str());
             let rebuilder = RepoRebuilder {
                 repo: &repo_path,
                 repo_type,
             };
             rebuilder.rebuild_repo();
-            println!("Rebuilt repo: {}", repo_path);
+            logger.debug(format!("Rebuilt repo: {}", repo_path).as_str());
         } else {
-            println!("Dry run mode. Skipping repo rebuild: {}", repo_path);
+            logger.warn(format!("Dry run mode. Skipping repo rebuild: {}", repo_path).as_str());
         }
 
         let selecter = VersionSelecter {
@@ -77,19 +81,21 @@ fn main() {
         };
 
         let (current_version, next_version) = selecter.get_version();
-        println!("Versions: current={}, next={}", current_version, next_version);
+        logger.debug(
+            format!("Versions: current={}, next={}", current_version, next_version).as_str()
+        );
 
         result_string.push_str(&format!("{}\nrelease/{}\n{}\n", repo, next_version, history));
-        println!("\n\n{}", repo);
-        println!("release/{}", next_version);
-        println!("{}", history);
+        logger.warn(format!("\n\n{}\nrelease/{}\n{}", repo, next_version, history).as_str());
 
         if !config.version_update_required {
-            println!("Dry run mode. Skipping version update in repo: {}", repo_path);
+            logger.debug(
+                format!("Dry run mode. Skipping version update in repo: {}", repo_path).as_str()
+            );
             continue;
         }
 
-        println!("Updating version in repo: {}", repo_path);
+        logger.debug(format!("Updating version in repo: {}", repo_path).as_str());
         let patcher = Patcher {
             next_version,
             current_version,
@@ -103,13 +109,14 @@ fn main() {
         };
 
         let result = patcher.update_version_in_repo();
-        println!("{}\n\n", result);
+        logger.warn(format!("{}\n\n", result).as_str());
 
         results_hash.insert(repo, result);
-        println!("Updated version in repo: {}", repo_path);
+        logger.debug(format!("Updated version in repo: {}", repo_path).as_str());
     }
 
-    println!("Repos history logs:\n{}", result_string);
-    println!("Repos PRs: {:#?}", results_hash);
-    println!("Version updater finished!");
+    logger.warn(
+        format!("Repos history logs:\n{}\nRepos PRs: {:#?}", result_string, results_hash).as_str()
+    );
+    logger.info(format!("Version updater finished!").as_str());
 }

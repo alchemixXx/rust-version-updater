@@ -1,5 +1,6 @@
 use serde_derive::{ Serialize, Deserialize };
 use crate::config::RepoType;
+use crate::logger::LoggerTrait;
 use crate::workers::loginer::get_switch_role_command;
 use std::fs::{ read_to_string, write };
 use std::path::Path;
@@ -28,9 +29,12 @@ pub struct Patcher<'repo> {
     pub sso_script_path: &'repo String,
 }
 
+impl<'config> LoggerTrait for Patcher<'config> {}
+
 impl<'repo> Patcher<'repo> {
     pub fn update_version_in_repo(&self) -> String {
-        println!("Updating version in repo: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Updating version in repo: {}", self.path).as_str());
 
         match self.repo_type {
             RepoType::Node => self.up_node_version(),
@@ -45,37 +49,41 @@ impl<'repo> Patcher<'repo> {
 
         let pr_link = self.create_pr();
 
-        println!(
-            "Updated version in repo: {0}. New version is: {1}, PR: {2:?}",
-            self.path,
-            self.next_version,
-            pr_link
+        logger.info(
+            format!(
+                "Updated version in repo: {0}. New version is: {1}, PR: {2:?}",
+                self.path,
+                self.next_version,
+                pr_link
+            ).as_str()
         );
         return pr_link;
     }
 
     fn up_node_version(&self) {
-        println!("Updating version in package.json: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Updating version in package.json: {}", self.path).as_str());
         self.up_version_by_replacement("package.json", 1);
-        println!("Updated version in package.json: {}", self.path);
+        logger.info(format!("Updated version in package.json: {}", self.path).as_str());
 
-        println!("Updating version in package-lock.json: {}", self.path);
+        logger.info(format!("Updating version in package-lock.json: {}", self.path).as_str());
         self.up_version_by_replacement("package-lock.json", 2);
-        println!("Updating version in package-lock.json: {}", self.path);
+        logger.info(format!("Updating version in package-lock.json: {}", self.path).as_str());
 
-        println!("Patched node repo by replacement: {}", self.path);
+        logger.info(format!("Patched node repo by replacement: {}", self.path).as_str());
     }
 
     fn up_python_version(&self) {
-        println!("Updating version in package.json: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Updating version in package.json: {}", self.path).as_str());
         self.up_version_by_replacement("package.json", 1);
-        println!("Updated version in package.json: {}", self.path);
+        logger.info(format!("Updated version in package.json: {}", self.path).as_str());
 
-        println!("Updating version in version.json: {}", self.path);
+        logger.info(format!("Updating version in version.json: {}", self.path).as_str());
         self.up_version_by_replacement("version.json", 1);
-        println!("Updating version in version.json: {}", self.path);
+        logger.info(format!("Updating version in version.json: {}", self.path).as_str());
 
-        println!("Patched node repo by replacement: {}", self.path);
+        logger.info(format!("Patched node repo by replacement: {}", self.path).as_str());
     }
 
     fn up_version_by_replacement(&self, file: &str, replacement_number: usize) {
@@ -95,7 +103,8 @@ impl<'repo> Patcher<'repo> {
     }
 
     fn add_changes(&self) {
-        println!("Adding changes to git: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Adding changes to git: {}", self.path).as_str());
         let output = Command::new("git")
             .arg("add")
             .arg("--all")
@@ -103,15 +112,16 @@ impl<'repo> Patcher<'repo> {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed add changes for repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed add changes for repo: {}", self.path).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed add changes for repo");
         }
-        println!("Added changes to git: {}", self.path);
+        logger.info(format!("Added changes to git: {}", self.path).as_str());
     }
 
     fn commit_changes(&self) {
-        println!("Committing changes to git: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Committing changes to git: {}", self.path).as_str());
         let output = Command::new("git")
             .arg("commit")
             .arg("-am")
@@ -120,15 +130,16 @@ impl<'repo> Patcher<'repo> {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to commit for repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to commit for repo: {}", self.path).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to commit for repo");
         }
-        println!("Committed changes to git: {}", self.path);
+        logger.info(format!("Committed changes to git: {}", self.path).as_str());
     }
 
     fn add_tags(&self) {
-        println!("Adding tags to git: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Adding tags to git: {}", self.path).as_str());
         let output = Command::new("git")
             .arg("tag")
             .arg("-a")
@@ -139,15 +150,16 @@ impl<'repo> Patcher<'repo> {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed add tags for repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed add tags for repo: {}", self.path).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed add tags for repo");
         }
-        println!("Adding tags to git: {}", self.path);
+        logger.info(format!("Adding tags to git: {}", self.path).as_str());
     }
 
     fn push_to_origin(&self) {
-        println!("Pushing changes to git origin: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Pushing changes to git origin: {}", self.path).as_str());
         let output = Command::new("git")
             .arg("push")
             .arg("origin")
@@ -157,15 +169,16 @@ impl<'repo> Patcher<'repo> {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to push changes for repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to push changes for repo: {}", self.path).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to push changes for repo");
         }
-        println!("Pushed changes to git origin: {}", self.path);
+        logger.info(format!("Pushed changes to git origin: {}", self.path).as_str());
     }
 
     fn push_to_tags(&self) {
-        println!("Pushing tags to git origin: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Pushing tags to git origin: {}", self.path).as_str());
         let output = Command::new("git")
             .arg("push")
             .arg("--tags")
@@ -173,22 +186,23 @@ impl<'repo> Patcher<'repo> {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to push tags for repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to push tags for repo: {}", self.path).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
 
             for line in String::from_utf8_lossy(&output.stderr).lines() {
                 if line.contains("[new tag]") {
-                    println!("Tag was pushed");
+                    format!("Tag was pushed");
                     return;
                 }
             }
             panic!("Failed to push tags for repo");
         }
-        println!("Pushed tags to git origin: {}", self.path);
+        logger.info(format!("Pushed tags to git origin: {}", self.path).as_str());
     }
 
     fn create_pr(&self) -> String {
-        println!("Creating PR in AWS: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Creating PR in AWS: {}", self.path).as_str());
 
         let output = self.execute_pr_create_with_login_command();
 
@@ -200,7 +214,7 @@ impl<'repo> Patcher<'repo> {
             self.repo_name,
             commit.pull_request.pull_request_id
         );
-        println!("Created PR in AWS: {}, PR: {}", self.path, pr_link);
+        logger.warn(format!("Created PR in AWS: {}, PR: {}", self.path, pr_link).as_str());
 
         return pr_link;
     }
@@ -218,9 +232,10 @@ impl<'repo> Patcher<'repo> {
     }
 
     fn execute_pr_create_with_login_command(&self) -> Output {
+        let logger = self.get_logger();
         let switch_role_command_string = get_switch_role_command(&self.sso_script_path, &self.role);
 
-        println!("Switch role command: {}", switch_role_command_string);
+        logger.info(format!("Switch role command: {}", switch_role_command_string).as_str());
         let aws_pr_create_command_string = self.get_pr_create_command_string();
         let command_string = format!(
             r#"
@@ -239,8 +254,8 @@ impl<'repo> Patcher<'repo> {
             .expect("Failed to execute PR creation command");
 
         if !output.status.success() {
-            eprintln!("Failed to create PR for repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to create PR for repo: {}", self.path).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to create PR for repo");
         }
 

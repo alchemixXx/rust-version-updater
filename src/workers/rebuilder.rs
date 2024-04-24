@@ -1,21 +1,23 @@
 use std::process::Command;
 
-use crate::config::RepoType;
+use crate::{ config::RepoType, logger::LoggerTrait };
 
 pub struct RepoRebuilder<'repo> {
     pub repo: &'repo String,
     pub repo_type: RepoType,
 }
 
+impl<'config> LoggerTrait for RepoRebuilder<'config> {}
 impl<'repo> RepoRebuilder<'repo> {
     pub fn rebuild_repo(&self) {
-        println!("Rebuilding repo: {}", self.repo);
+        let logger = self.get_logger();
+        logger.debug(format!("Rebuilding repo: {}", self.repo).as_str());
         match self.repo_type {
             RepoType::Node => {
                 self.rebuild_node_repo();
             }
             RepoType::Python => {
-                println!("Nothing to rebuild in repo='{}'", self.repo);
+                logger.debug(format!("Nothing to rebuild in repo='{}'", self.repo).as_str());
             }
         }
     }
@@ -27,37 +29,40 @@ impl<'repo> RepoRebuilder<'repo> {
     }
 
     fn delete_folders(&self) {
-        println!("Deleting node_modules and dist folders");
+        let logger = self.get_logger();
+        logger.debug(format!("Deleting node_modules and dist folders").as_str());
         let output = Command::new("rm")
             .arg("-rf")
             .current_dir(&self.repo)
             .output()
             .expect("Failed to execute command");
         if !output.status.success() {
-            eprintln!("Failed to delete folders in repo: {}", self.repo);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to delete folders in repo: {}", self.repo).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to delete folders in repo");
         }
-        println!("Deleted node_modules and dis folders");
+        logger.debug(format!("Deleted node_modules and dis folders").as_str());
     }
 
     fn install_npm_packages(&self) {
-        println!("Installing packages");
+        let logger = self.get_logger();
+        logger.debug(format!("Installing packages").as_str());
         let output = Command::new("npm")
             .arg("install")
             .current_dir(&self.repo)
             .output()
             .expect("Failed to execute command");
         if !output.status.success() {
-            eprintln!("Failed to install packages in repo: {}", self.repo);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to install packages in repo: {}", self.repo).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to install packages in repo");
         }
-        println!("Installed packages");
+        logger.debug(format!("Installed packages").as_str());
     }
 
     fn build_node_repo(&self) {
-        println!("Building node repo");
+        let logger = self.get_logger();
+        logger.debug(format!("Building node repo").as_str());
         let output = Command::new("npm")
             .arg("run")
             .arg("build")
@@ -65,10 +70,10 @@ impl<'repo> RepoRebuilder<'repo> {
             .output()
             .expect("Failed to execute command");
         if !output.status.success() {
-            eprintln!("Failed to build node repo: {}", self.repo);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to build node repo: {}", self.repo).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to build node repo");
         }
-        println!("Built node repo");
+        logger.debug(format!("Built node repo").as_str());
     }
 }

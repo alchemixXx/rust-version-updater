@@ -1,17 +1,21 @@
 use std::process::Command;
+
+use crate::logger::LoggerTrait;
 pub struct HistoryProvider<'repo> {
     pub path: &'repo String,
 }
 
+impl<'config> LoggerTrait for HistoryProvider<'config> {}
 impl<'repo> HistoryProvider<'repo> {
     pub fn provide(&self) -> String {
-        println!("Calculating difference for repo: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Calculating difference for repo: {}", self.path).as_str());
         let history_string = self.get_git_history_as_string();
-        println!("Calculated difference for repo: {}", self.path);
+        logger.info(format!("Calculated difference for repo: {}", self.path).as_str());
 
-        println!("Generating history for repo: {}", self.path);
+        logger.info(format!("Generating history for repo: {}", self.path).as_str());
         let result = self.generate_git_history_string(history_string);
-        println!("Generated history for repo: {}", self.path);
+        logger.info(format!("Generated history for repo: {}", self.path).as_str());
 
         return result;
     }
@@ -34,7 +38,8 @@ impl<'repo> HistoryProvider<'repo> {
     }
 
     fn get_git_history_as_string(&self) -> String {
-        println!("Providing history for repo: {}", self.path);
+        let logger = self.get_logger();
+        logger.info(format!("Providing history for repo: {}", self.path).as_str());
         let output = Command::new("git")
             .arg("log")
             .arg(format!("--pretty=format:%s"))
@@ -47,11 +52,11 @@ impl<'repo> HistoryProvider<'repo> {
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
-            eprintln!("Failed to provide history for repo: {}", self.path);
-            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+            logger.error(format!("Failed to provide history for repo: {}", self.path).as_str());
+            logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to provide history for repo");
         }
-        println!("Provided history for repo: {}", self.path);
+        logger.info(format!("Provided history for repo: {}", self.path).as_str());
 
         return String::from_utf8_lossy(&output.stdout).to_string();
     }

@@ -1,4 +1,5 @@
 use std::process::Command;
+use crate::logger::Logger;
 #[derive(Debug)]
 enum TargetConfig {
     JFrog(String),
@@ -6,14 +7,16 @@ enum TargetConfig {
 }
 
 pub fn login(branch: &str, script_path: &str, role: &str) {
-    println!("Logging in");
+    let logger = Logger::new();
+    logger.debug("Logging in");
     let target_config = get_target_config(branch);
     login_to_aws(target_config);
     switch_role(script_path, role);
-    println!("Logged in");
+    logger.debug("Logged in");
 }
 
 fn login_to_aws(target_config: TargetConfig) {
+    let logger = Logger::new();
     match target_config {
         TargetConfig::JFrog(profile) => {
             use_target_config(&profile);
@@ -21,7 +24,7 @@ fn login_to_aws(target_config: TargetConfig) {
         }
 
         TargetConfig::CodeBuild(profile) => {
-            println!("Logging in to CodeBuild");
+            logger.debug("Logging in to CodeBuild");
             use_target_config(&profile);
             generate_aws_tokens();
             generate_npm_token();
@@ -30,20 +33,22 @@ fn login_to_aws(target_config: TargetConfig) {
 }
 
 fn use_target_config(target_config: &String) {
-    println!("Using target config: {:?}", target_config);
+    let logger = Logger::new();
+    logger.debug(format!("Using target config: {:?}", target_config).as_str());
     let output = Command::new("npmrc")
         .arg(target_config)
         .output()
         .expect("Failed to execute git command");
     if !output.status.success() {
-        eprintln!("Failed to use target config");
-        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+        logger.error(format!("Failed to use target config").as_str());
+        logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to use target config");
     }
-    println!("Used target config");
+    logger.info("Used target config");
 }
 
 fn get_target_config(branch: &str) -> TargetConfig {
+    let logger = Logger::new();
     if branch == "next" {
         return TargetConfig::JFrog("jfrog".to_string());
     }
@@ -56,23 +61,25 @@ fn get_target_config(branch: &str) -> TargetConfig {
         return TargetConfig::CodeBuild("codebuild".to_string());
     }
 
-    eprintln!("Unknown branch: {}", branch);
+    logger.error(format!("Unknown branch: {}", branch).as_str());
     panic!("Unknown branch");
 }
 
 pub fn generate_aws_tokens() {
+    let logger = Logger::new();
     let output = Command::new("aws-sso-util")
         .arg("login")
         .output()
         .expect("Failed to execute aws login command");
     if !output.status.success() {
-        eprintln!("Failed to login to AWS");
-        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+        logger.error(format!("Failed to login to AWS").as_str());
+        logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to login to AWS");
     }
 }
 
 fn generate_npm_token() {
+    let logger = Logger::new();
     let output = Command::new("aws")
         .arg("codeartifact")
         .arg("login")
@@ -93,14 +100,15 @@ fn generate_npm_token() {
         .output()
         .expect("Failed to execute git command");
     if !output.status.success() {
-        eprintln!("Failed to generate token to codeartifact");
-        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+        logger.error(format!("Failed to generate token to codeartifact").as_str());
+        logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to generate token to codeartifact");
     }
 }
 
 pub fn switch_role(script_path: &str, role: &str) {
-    println!("Switching role");
+    let logger = Logger::new();
+    logger.debug("Switching role");
     let command_string = get_switch_role_command(script_path, role);
     let output = Command::new("zsh")
         .arg("-c")
@@ -108,11 +116,11 @@ pub fn switch_role(script_path: &str, role: &str) {
         .output()
         .expect("Failed to switch the aws role");
     if !output.status.success() {
-        eprintln!("Failed to switch the aws role");
-        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+        logger.error(format!("Failed to switch the aws role").as_str());
+        logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to switch the aws role");
     }
-    println!("Switched role");
+    logger.debug("Switched role");
 }
 
 pub fn get_switch_role_command(script_path: &str, role: &str) -> String {
