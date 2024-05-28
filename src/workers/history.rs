@@ -17,24 +17,24 @@ impl<'repo> HistoryProvider<'repo> {
         let result = self.generate_git_history_string(history_string);
         logger.info(format!("Generated history for repo: {}", self.path).as_str());
 
-        return result;
+        result
     }
 
     fn generate_git_history_string(&self, history: String) -> String {
         let mut target = String::new();
-        let parts = history.split("\n");
+        let parts = history.split('\n');
 
         for part in parts {
             let trimmed = part.trim().replace("* ", "");
-            if trimmed.starts_with("release/") || trimmed.starts_with("@") {
+            if trimmed.starts_with("release/") || trimmed.starts_with('@') {
                 return target;
             }
 
             target.push_str(&trimmed);
-            target.push_str("\n");
+            target.push('\n');
         }
 
-        return target;
+        target
     }
 
     fn get_git_history_as_string(&self) -> String {
@@ -42,13 +42,13 @@ impl<'repo> HistoryProvider<'repo> {
         logger.info(format!("Providing history for repo: {}", self.path).as_str());
         let output = Command::new("git")
             .arg("log")
-            .arg(format!("--pretty=format:%s"))
+            .arg("--pretty=format:%s")
             .arg("--graph")
             .arg("--abbrev-commit")
             .arg("--decorate")
             .arg("--date=relative")
             .arg("-100")
-            .current_dir(&self.path)
+            .current_dir(self.path)
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {

@@ -30,10 +30,10 @@ impl<'repo> RepoRebuilder<'repo> {
 
     fn delete_folders(&self) {
         let logger = self.get_logger();
-        logger.debug(format!("Deleting node_modules and dist folders").as_str());
+        logger.debug("Deleting node_modules and dist folders");
         let output = Command::new("rm")
             .arg("-rf")
-            .current_dir(&self.repo)
+            .current_dir(self.repo)
             .output()
             .expect("Failed to execute command");
         if !output.status.success() {
@@ -41,15 +41,15 @@ impl<'repo> RepoRebuilder<'repo> {
             logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to delete folders in repo");
         }
-        logger.debug(format!("Deleted node_modules and dis folders").as_str());
+        logger.debug("Deleted node_modules and dis folders");
     }
 
     fn install_npm_packages(&self) {
         let logger = self.get_logger();
-        logger.debug(format!("Installing packages").as_str());
+        logger.debug("Installing packages");
         let output = Command::new("npm")
             .arg("install")
-            .current_dir(&self.repo)
+            .current_dir(self.repo)
             .output()
             .expect("Failed to execute command");
         if !output.status.success() {
@@ -57,16 +57,16 @@ impl<'repo> RepoRebuilder<'repo> {
             logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to install packages in repo");
         }
-        logger.debug(format!("Installed packages").as_str());
+        logger.debug("Installed packages");
     }
 
     fn build_node_repo(&self) {
         let logger = self.get_logger();
-        logger.debug(format!("Building node repo").as_str());
+        logger.debug("Building node repo");
         let output = Command::new("npm")
             .arg("run")
             .arg("build")
-            .current_dir(&self.repo)
+            .current_dir(self.repo)
             .output()
             .expect("Failed to execute command");
         if !output.status.success() {
@@ -74,6 +74,6 @@ impl<'repo> RepoRebuilder<'repo> {
             logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
             panic!("Failed to build node repo");
         }
-        logger.debug(format!("Built node repo").as_str());
+        logger.debug("Built node repo");
     }
 }

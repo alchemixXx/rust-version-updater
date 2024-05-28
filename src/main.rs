@@ -22,12 +22,12 @@ fn main() {
 
     crate::logger::Logger::init(config.logger.log_level);
     let logger = crate::logger::Logger::new();
-    logger.info(format!("Version updater started!").as_str());
+    logger.info("Version updater started!");
     let repos = config.repos.get_repos_list();
     logger.info(format!("Repos to update: {:#?}", repos).as_str());
 
     let mut result_string = String::new();
-    result_string.push_str("\n");
+    result_string.push('\n');
 
     logger.debug("Logging in to AWS...");
     login(&config.git.branch, &config.aws.role_script_path, &config.aws.role);
@@ -41,7 +41,7 @@ fn main() {
         logger.debug(format!("Got repo type for repo: {}.Type={:?}", repo, repo_type).as_str());
 
         let repo_path = Path::new(&config.root)
-            .join(&repo)
+            .join(repo)
             .to_str()
             .expect("Cant't build path")
             .to_string();
@@ -118,5 +118,5 @@ fn main() {
     logger.warn(
         format!("Repos history logs:\n{}\nRepos PRs: {:#?}", result_string, results_hash).as_str()
     );
-    logger.info(format!("Version updater finished!").as_str());
+    logger.info("Version updater finished!");
 }

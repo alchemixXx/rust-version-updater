@@ -57,7 +57,7 @@ impl<'repo> Patcher<'repo> {
                 pr_link
             ).as_str()
         );
-        return pr_link;
+        pr_link
     }
 
     fn up_node_version(&self) {
@@ -108,7 +108,7 @@ impl<'repo> Patcher<'repo> {
         let output = Command::new("git")
             .arg("add")
             .arg("--all")
-            .current_dir(&self.path)
+            .current_dir(self.path)
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
@@ -126,7 +126,7 @@ impl<'repo> Patcher<'repo> {
             .arg("commit")
             .arg("-am")
             .arg(format!("@{} release", self.next_version))
-            .current_dir(&self.path)
+            .current_dir(self.path)
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
@@ -146,7 +146,7 @@ impl<'repo> Patcher<'repo> {
             .arg(format!("release/{}", self.next_version))
             .arg("-m")
             .arg(format!("release/{} version", self.next_version))
-            .current_dir(&self.path)
+            .current_dir(self.path)
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
@@ -165,7 +165,7 @@ impl<'repo> Patcher<'repo> {
             .arg("origin")
             .arg(self.branch.as_str())
             .arg("-f")
-            .current_dir(&self.path)
+            .current_dir(self.path)
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
@@ -182,7 +182,7 @@ impl<'repo> Patcher<'repo> {
         let output = Command::new("git")
             .arg("push")
             .arg("--tags")
-            .current_dir(&self.path)
+            .current_dir(self.path)
             .output()
             .expect("Failed to execute git command");
         if !output.status.success() {
@@ -191,7 +191,7 @@ impl<'repo> Patcher<'repo> {
 
             for line in String::from_utf8_lossy(&output.stderr).lines() {
                 if line.contains("[new tag]") {
-                    format!("Tag was pushed");
+                    logger.info("Tag was pushed");
                     return;
                 }
             }
@@ -216,24 +216,25 @@ impl<'repo> Patcher<'repo> {
         );
         logger.warn(format!("Created PR in AWS: {}, PR: {}", self.path, pr_link).as_str());
 
-        return pr_link;
+        pr_link
     }
 
     fn get_pr_create_command_string(&self) -> String {
+        let cda_artifact = format!("'CDA Artifact {}'", self.next_version);
         let command = format!(
             "aws codecommit create-pull-request --title {0} --targets repositoryName={1},sourceReference={2},destinationReference={3}",
-            format!("'CDA Artifact {}'", self.next_version),
+            cda_artifact,
             self.repo_name,
             self.branch,
             self.release_branch
         );
 
-        return command;
+        command
     }
 
     fn execute_pr_create_with_login_command(&self) -> Output {
         let logger = self.get_logger();
-        let switch_role_command_string = get_switch_role_command(&self.sso_script_path, &self.role);
+        let switch_role_command_string = get_switch_role_command(self.sso_script_path, self.role);
 
         logger.info(format!("Switch role command: {}", switch_role_command_string).as_str());
         let aws_pr_create_command_string = self.get_pr_create_command_string();
@@ -249,7 +250,7 @@ impl<'repo> Patcher<'repo> {
         let output = Command::new("zsh")
             .arg("-c")
             .arg(&command_string)
-            .current_dir(&self.path)
+            .current_dir(self.path)
             .output()
             .expect("Failed to execute PR creation command");
 
@@ -259,6 +260,6 @@ impl<'repo> Patcher<'repo> {
             panic!("Failed to create PR for repo");
         }
 
-        return output;
+        output
     }
 }

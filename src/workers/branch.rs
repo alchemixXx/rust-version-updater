@@ -67,7 +67,7 @@ impl<'branch> BranchSwitcher<'branch> {
         logger.info(format!("Switching branch for repo: {}", repo_path).as_str());
         let output = Command::new("git")
             .arg("checkout")
-            .arg(&self.target_branch)
+            .arg(self.target_branch)
             .current_dir(repo_path)
             .output()
             .expect("Failed to execute git command");

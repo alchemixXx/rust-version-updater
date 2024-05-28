@@ -1,7 +1,6 @@
 use serde_derive::Deserialize;
 
 use std::fs;
-use toml;
 
 use crate::logger::LogLevel;
 
@@ -77,11 +76,11 @@ pub fn read_config(path: &str) -> Data {
     println!("Reading config file: {}", path);
     let contents = fs
         ::read_to_string(path)
-        .expect(format!("Could not read file `{}`", path).as_str());
+        .unwrap_or_else(|_| panic!("Could not read file `{path}`"));
 
     let data: Data = toml
         ::from_str(&contents)
-        .expect(format!("Unable to load data from `{}`", path).as_str());
+        .unwrap_or_else(|_| panic!("Unable to load data from `{path}`"));
     println!("Read config file: {}. {:#?}", path, data);
 
     data

@@ -15,25 +15,19 @@ impl<'config> LoggerTrait for VersionSelecter<'config> {}
 impl<'repo> VersionSelecter<'repo> {
     pub fn get_version(&self) -> (String, String) {
         let logger = self.get_logger();
-        logger.debug(format!("Getting current version...").as_str());
+        logger.debug("Getting current version...");
         let current_version = self.read_version_file();
         logger.debug(format!("Got current version: {}", current_version).as_str());
 
         match self.expected_version {
-            Some(expected_version) => {
-                return (current_version, expected_version.clone());
-            }
+            Some(expected_version) => { (current_version, expected_version.clone()) }
             None => {
-                logger.debug(
-                    format!(
-                        "Expected version is empty. Getting current version from file..."
-                    ).as_str()
-                );
+                logger.debug("Expected version is empty. Getting current version from file...");
 
                 let next_version = self.get_next_version_from_current(current_version.clone());
                 logger.debug(format!("Got next version: {}", next_version).as_str());
 
-                return (current_version, next_version);
+                (current_version, next_version)
             }
         }
     }
@@ -47,7 +41,7 @@ impl<'repo> VersionSelecter<'repo> {
             let next_letter = ((last as u8) + 1) as char;
             current_version.pop();
 
-            return format!("{}{}", current_version, next_letter);
+            format!("{current_version}{next_letter}")
         } else if last == 'z' {
             current_version.pop();
             return format!("{}aa", current_version);
@@ -69,8 +63,8 @@ impl<'repo> VersionSelecter<'repo> {
 
                     let mut version = version_value.to_string();
 
-                    if version.starts_with("\"") && version.ends_with("\"") {
-                        version = version.replace("\"", "");
+                    if version.starts_with('\"') && version.ends_with('\"') {
+                        version = version.replace('\"', "");
                     }
 
                     if version == "null" || version.is_empty() || version == "0.0.0" {
@@ -98,7 +92,7 @@ impl<'repo> VersionSelecter<'repo> {
         let path = Path::new(&self.repo).join(file_name);
         let path = path
             .to_str()
-            .expect(format!("Can't build path: {}, {}", self.repo, file_name).as_str())
+            .unwrap_or_else(|| panic!("Can't build path: {}, {}", self.repo, file_name))
             .to_string();
         logger.debug(format!("Path: {}", path).as_str());
         path

@@ -40,7 +40,7 @@ fn use_target_config(target_config: &String) {
         .output()
         .expect("Failed to execute git command");
     if !output.status.success() {
-        logger.error(format!("Failed to use target config").as_str());
+        logger.error("Failed to use target config");
         logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to use target config");
     }
@@ -72,7 +72,7 @@ pub fn generate_aws_tokens() {
         .output()
         .expect("Failed to execute aws login command");
     if !output.status.success() {
-        logger.error(format!("Failed to login to AWS").as_str());
+        logger.error("Failed to login to AWS");
         logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to login to AWS");
     }
@@ -100,7 +100,7 @@ fn generate_npm_token() {
         .output()
         .expect("Failed to execute git command");
     if !output.status.success() {
-        logger.error(format!("Failed to generate token to codeartifact").as_str());
+        logger.error("Failed to generate token to codeartifact");
         logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to generate token to codeartifact");
     }
@@ -116,7 +116,7 @@ pub fn switch_role(script_path: &str, role: &str) {
         .output()
         .expect("Failed to switch the aws role");
     if !output.status.success() {
-        logger.error(format!("Failed to switch the aws role").as_str());
+        logger.error("Failed to switch the aws role");
         logger.error(format!("Error: {}", String::from_utf8_lossy(&output.stderr)).as_str());
         panic!("Failed to switch the aws role");
     }
@@ -124,5 +124,5 @@ pub fn switch_role(script_path: &str, role: &str) {
 }
 
 pub fn get_switch_role_command(script_path: &str, role: &str) -> String {
-    return format!("source {0} -profile {1}", script_path, role);
+    format!("source {0} -profile {1}", script_path, role)
 }
