@@ -61,6 +61,10 @@ fn get_target_config(branch: &str) -> TargetConfig {
         return TargetConfig::CodeBuild("codebuild".to_string());
     }
 
+    if branch == "dev-591" {
+        return TargetConfig::CodeBuild("codebuild".to_string());
+    }
+
     logger.error(format!("Unknown branch: {}", branch).as_str());
     panic!("Unknown branch");
 }
