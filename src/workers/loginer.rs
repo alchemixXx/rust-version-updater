@@ -71,8 +71,11 @@ fn get_target_config(branch: &str) -> TargetConfig {
 
 pub fn generate_aws_tokens() {
     let logger = Logger::new();
-    let output = Command::new("aws-sso-util")
+    let output = Command::new("aws")
+        .arg("sso")
         .arg("login")
+        .arg("--sso-session")
+        .arg("sso")
         .output()
         .expect("Failed to execute aws login command");
     if !output.status.success() {
