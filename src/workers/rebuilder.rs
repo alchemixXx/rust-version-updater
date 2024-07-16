@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use crate::{ config::RepoType, logger::LoggerTrait };
+use crate::{config::RepoType, logger::LoggerTrait};
 
 pub struct RepoRebuilder<'repo> {
     pub repo: &'repo String,

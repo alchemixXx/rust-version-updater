@@ -20,7 +20,7 @@ impl<'repo> VersionSelecter<'repo> {
         logger.debug(format!("Got current version: {}", current_version).as_str());
 
         match self.expected_version {
-            Some(expected_version) => { (current_version, expected_version.clone()) }
+            Some(expected_version) => (current_version, expected_version.clone()),
             None => {
                 logger.debug("Expected version is empty. Getting current version from file...");
 
@@ -56,9 +56,8 @@ impl<'repo> VersionSelecter<'repo> {
             let path = self.get_version_path(version_file);
             match fs::read_to_string(path) {
                 Ok(content) => {
-                    let json: serde_json::Value = serde_json
-                        ::from_str(&content)
-                        .expect("JSON was not well-formatted");
+                    let json: serde_json::Value =
+                        serde_json::from_str(&content).expect("JSON was not well-formatted");
                     let version_value = &json["version"];
 
                     let mut version = version_value.to_string();
@@ -68,9 +67,8 @@ impl<'repo> VersionSelecter<'repo> {
                     }
 
                     if version == "null" || version.is_empty() || version == "0.0.0" {
-                        logger.error(
-                            format!("Version is empty in file `{}`", version_file).as_str()
-                        );
+                        logger
+                            .error(format!("Version is empty in file `{}`", version_file).as_str());
                         continue;
                     }
                     logger.debug(format!("Got current version: {}", version).as_str());
@@ -82,7 +80,11 @@ impl<'repo> VersionSelecter<'repo> {
             };
         }
         logger.error(
-            format!("Could not get version from any of the files `{:?}`", VERSION_FILES).as_str()
+            format!(
+                "Could not get version from any of the files `{:?}`",
+                VERSION_FILES
+            )
+            .as_str(),
         );
         panic!("Could not get version from any of the files");
     }

@@ -48,9 +48,8 @@ pub enum RepoType {
 
 impl WorkersConfig {
     pub fn get_repos_list(&self) -> Vec<String> {
-        let mut repos: Vec<String> = Vec::with_capacity(
-            self.node_workers.len() + self.python_workers.len()
-        );
+        let mut repos: Vec<String> =
+            Vec::with_capacity(self.node_workers.len() + self.python_workers.len());
         for repo in self.node_workers.iter() {
             repos.push(repo.to_string());
         }
@@ -74,13 +73,11 @@ impl WorkersConfig {
 
 pub fn read_config(path: &str) -> Data {
     println!("Reading config file: {}", path);
-    let contents = fs
-        ::read_to_string(path)
-        .unwrap_or_else(|_| panic!("Could not read file `{path}`"));
+    let contents =
+        fs::read_to_string(path).unwrap_or_else(|_| panic!("Could not read file `{path}`"));
 
-    let data: Data = toml
-        ::from_str(&contents)
-        .unwrap_or_else(|_| panic!("Unable to load data from `{path}`"));
+    let data: Data =
+        toml::from_str(&contents).unwrap_or_else(|_| panic!("Unable to load data from `{path}`"));
     println!("Read config file: {}. {:#?}", path, data);
 
     data

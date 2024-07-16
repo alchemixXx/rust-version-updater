@@ -1,5 +1,5 @@
-use std::process::Command;
 use crate::logger::Logger;
+use std::process::Command;
 #[derive(Debug)]
 enum TargetConfig {
     JFrog(String),

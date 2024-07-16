@@ -1,10 +1,10 @@
-use serde_derive::{ Serialize, Deserialize };
 use crate::config::RepoType;
 use crate::logger::LoggerTrait;
 use crate::workers::loginer::get_switch_role_command;
-use std::fs::{ read_to_string, write };
+use serde_derive::{Deserialize, Serialize};
+use std::fs::{read_to_string, write};
 use std::path::Path;
-use std::process::{ Command, Output };
+use std::process::{Command, Output};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,10 +52,9 @@ impl<'repo> Patcher<'repo> {
         logger.info(
             format!(
                 "Updated version in repo: {0}. New version is: {1}, PR: {2:?}",
-                self.path,
-                self.next_version,
-                pr_link
-            ).as_str()
+                self.path, self.next_version, pr_link
+            )
+            .as_str(),
         );
         pr_link
     }
@@ -97,7 +96,7 @@ impl<'repo> Patcher<'repo> {
         package_json_content = package_json_content.replacen(
             format!("\"version\": \"{}\"", &self.current_version).as_str(),
             format!("\"version\": \"{}\"", &self.next_version).as_str(),
-            replacement_number
+            replacement_number,
         );
         write(&path, package_json_content).expect("Failed to write files");
     }
@@ -243,8 +242,7 @@ impl<'repo> Patcher<'repo> {
                 {0}
                 {1}
             "#,
-            switch_role_command_string,
-            aws_pr_create_command_string
+            switch_role_command_string, aws_pr_create_command_string
         );
 
         let output = Command::new("zsh")

@@ -1,7 +1,7 @@
-use std::fmt::{ Display, Result, Formatter };
+use std::fmt::{Display, Formatter, Result};
 
 use env_logger::Env;
-use serde_derive::{ Deserialize, Serialize };
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LogLevel {
