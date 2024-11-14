@@ -3,9 +3,11 @@ use std::collections::HashMap;
 use std::path::Path;
 mod cli;
 mod config;
+mod custom_error;
 mod logger;
 mod workers;
 use cli::CLi;
+use custom_error::CustomResult;
 use workers::branch::BranchSwitcher;
 use workers::history::HistoryProvider;
 use workers::loginer::login;
@@ -13,7 +15,7 @@ use workers::patcher::Patcher;
 use workers::rebuilder::RepoRebuilder;
 use workers::version::VersionSelecter;
 
-fn main() {
+fn main() -> CustomResult<()> {
     println!("Reading cli args...");
     let cli_args = CLi::parse();
     println!("CLI args: {:#?}", cli_args);
@@ -144,4 +146,6 @@ fn main() {
         .as_str(),
     );
     logger.info("Version updater finished!");
+
+    Ok(())
 }
