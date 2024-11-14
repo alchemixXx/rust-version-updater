@@ -18,7 +18,7 @@ impl<'repo> RepoRebuilder<'repo> {
         logger.debug(format!("Rebuilding repo: {}", self.repo).as_str());
         match self.repo_type {
             RepoType::Node => {
-                self.rebuild_node_repo();
+                self.rebuild_node_repo()?;
                 Ok(())
             }
             RepoType::Python => {

@@ -1,6 +1,7 @@
 pub type CustomResult<T> = core::result::Result<T, CustomError>;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum CustomError {
     CommandExecution(String),
     UnknownBranch,

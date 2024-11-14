@@ -20,12 +20,12 @@ fn main() -> CustomResult<()> {
     let cli_args = CLi::parse();
     println!("CLI args: {:#?}", cli_args);
 
-    let config = config::read_config(&cli_args.path);
+    let config = config::read_config(&cli_args.path)?;
 
     crate::logger::Logger::init(config.logger.log_level);
     let logger = crate::logger::Logger::new();
     logger.info("Version updater started!");
-    let repos = config.repos.get_repos_list();
+    let repos = config.repos.get_repos_list()?;
     logger.info(format!("Repos to update: {:#?}", repos).as_str());
 
     let mut result_string = String::new();
@@ -36,32 +36,54 @@ fn main() -> CustomResult<()> {
         &config.git.branch,
         &config.aws.role_script_path,
         &config.aws.role,
-    );
+    )?;
     logger.debug("Logged in to AWS");
 
     let mut results_hash: HashMap<&String, String> = HashMap::new();
+    let mut errors_hash: HashMap<&String, String> = HashMap::new();
 
     for repo in repos.iter() {
         logger.debug(format!("Getting repo type for repo: {}", repo).as_str());
-        let repo_type = config.repos.get_repo_type(repo);
+        let repo_type = match config.repos.get_repo_type(repo) {
+            Ok(repo_type) => repo_type,
+            Err(e) => {
+                errors_hash.insert(repo, e.to_string());
+                continue;
+            }
+        };
         logger.debug(format!("Got repo type for repo: {}.Type={:?}", repo, repo_type).as_str());
 
-        let repo_path = Path::new(&config.root)
-            .join(repo)
-            .to_str()
-            .expect("Cant't build path")
-            .to_string();
+        let repo_path = match Path::new(&config.root).join(repo).to_str() {
+            Some(path) => path.to_string(),
+            None => {
+                let error = format!("Failed to get repo path for repo: {}", repo);
+                errors_hash.insert(repo, error);
+                continue;
+            }
+        };
         let switcher = BranchSwitcher {
             target_branch: &config.git.branch,
         };
 
         logger.debug(format!("Checking out to target branch for repo: {}", repo_path).as_str());
-        switcher.checkout_target_branch(&repo_path);
+        match switcher.checkout_target_branch(&repo_path) {
+            Ok(_) => {}
+            Err(e) => {
+                errors_hash.insert(repo, e.to_string());
+                continue;
+            }
+        };
         logger.debug(format!("Checked out to target branch for repo: {}", repo_path).as_str());
 
         let history_provider = HistoryProvider { path: &repo_path };
         logger.debug(format!("Collecting repo history: {}", repo_path).as_str());
-        let history = history_provider.provide();
+        let history = match history_provider.provide() {
+            Ok(history) => history,
+            Err(e) => {
+                errors_hash.insert(repo, e.to_string());
+                continue;
+            }
+        };
         logger.debug(
             format!(
                 "Collected repo history: {}. Results: {:?}",
@@ -81,7 +103,13 @@ fn main() -> CustomResult<()> {
                 repo: &repo_path,
                 repo_type,
             };
-            rebuilder.rebuild_repo();
+            match rebuilder.rebuild_repo() {
+                Ok(_) => {}
+                Err(e) => {
+                    errors_hash.insert(repo, e.to_string());
+                    continue;
+                }
+            };
             logger.debug(format!("Rebuilt repo: {}", repo_path).as_str());
         } else {
             logger.warn(format!("Dry run mode. Skipping repo rebuild: {}", repo_path).as_str());
@@ -92,7 +120,13 @@ fn main() -> CustomResult<()> {
             repo: &repo_path,
         };
 
-        let (current_version, next_version) = selecter.get_version();
+        let (current_version, next_version) = match selecter.get_version() {
+            Ok(versions) => versions,
+            Err(e) => {
+                errors_hash.insert(repo, e.to_string());
+                continue;
+            }
+        };
         logger.debug(
             format!(
                 "Versions: current={}, next={}",
@@ -123,7 +157,7 @@ fn main() -> CustomResult<()> {
             next_version,
             current_version,
             path: &repo_path,
-            repo_type: config.repos.get_repo_type(repo),
+            repo_type,
             branch: &config.git.branch,
             release_branch: &config.git.release_branch,
             repo_name: repo,
@@ -131,7 +165,13 @@ fn main() -> CustomResult<()> {
             sso_script_path: &config.aws.role_script_path,
         };
 
-        let result = patcher.update_version_in_repo();
+        let result = match patcher.update_version_in_repo() {
+            Ok(result) => result,
+            Err(e) => {
+                errors_hash.insert(repo, e.to_string());
+                continue;
+            }
+        };
         logger.warn(format!("{}\n\n", result).as_str());
 
         results_hash.insert(repo, result);
@@ -145,6 +185,8 @@ fn main() -> CustomResult<()> {
         )
         .as_str(),
     );
+    logger.warn(format!("Errors: {:#?}", errors_hash).as_str());
+
     logger.info("Version updater finished!");
 
     Ok(())
