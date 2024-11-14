@@ -87,9 +87,9 @@ impl<'repo> VersionSelecter<'repo> {
             )
             .as_str(),
         );
-        return Err(CustomError::VersionBuild(
+        Err(CustomError::VersionBuild(
             "Could not get version from any of the files".to_string(),
-        ));
+        ))
     }
 
     fn get_version_path(&self, file_name: &str) -> CustomResult<String> {
@@ -100,14 +100,12 @@ impl<'repo> VersionSelecter<'repo> {
         match path {
             Some(path) => {
                 logger.debug(format!("Path: {}", path).as_str());
-                return Ok(path.to_string());
+                Ok(path.to_string())
             }
-            None => {
-                return Err(CustomError::VersionBuild(format!(
-                    "Can't build path: {}, {}",
-                    self.repo, file_name,
-                )));
-            }
+            None => Err(CustomError::VersionBuild(format!(
+                "Can't build path: {}, {}",
+                self.repo, file_name,
+            ))),
         }
     }
 }

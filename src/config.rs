@@ -43,7 +43,7 @@ pub struct Data {
     pub logger: LoggerConfig,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum RepoType {
     Node,
     Python,
@@ -71,9 +71,9 @@ impl WorkersConfig {
             return Ok(RepoType::Python);
         }
 
-        return Err(CustomError::ConfigParsingError(
+        Err(CustomError::ConfigParsingError(
             "Unknown repo type".to_string(),
-        ));
+        ))
     }
 }
 
