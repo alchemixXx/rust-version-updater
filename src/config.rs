@@ -2,7 +2,10 @@ use serde_derive::Deserialize;
 
 use std::fs;
 
-use crate::logger::LogLevel;
+use crate::{
+    custom_error::{CustomError, CustomResult},
+    logger::LogLevel,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct WorkersConfig {
@@ -47,7 +50,7 @@ pub enum RepoType {
 }
 
 impl WorkersConfig {
-    pub fn get_repos_list(&self) -> Vec<String> {
+    pub fn get_repos_list(&self) -> CustomResult<Vec<String>> {
         let mut repos: Vec<String> =
             Vec::with_capacity(self.node_workers.len() + self.python_workers.len());
         for repo in self.node_workers.iter() {
@@ -56,22 +59,25 @@ impl WorkersConfig {
         for repo in self.python_workers.iter() {
             repos.push(repo.to_string());
         }
-        repos
+
+        Ok(repos)
     }
 
-    pub fn get_repo_type(&self, repo: &str) -> RepoType {
+    pub fn get_repo_type(&self, repo: &str) -> CustomResult<RepoType> {
         if self.node_workers.contains(&repo.to_string()) {
-            return RepoType::Node;
+            return Ok(RepoType::Node);
         }
         if self.python_workers.contains(&repo.to_string()) {
-            return RepoType::Python;
+            return Ok(RepoType::Python);
         }
 
-        panic!("Unknown repo type");
+        return Err(CustomError::ConfigParsingError(
+            "Unknown repo type".to_string(),
+        ));
     }
 }
 
-pub fn read_config(path: &str) -> Data {
+pub fn read_config(path: &str) -> CustomResult<Data> {
     println!("Reading config file: {}", path);
     let contents =
         fs::read_to_string(path).unwrap_or_else(|_| panic!("Could not read file `{path}`"));
@@ -80,5 +86,5 @@ pub fn read_config(path: &str) -> Data {
         toml::from_str(&contents).unwrap_or_else(|_| panic!("Unable to load data from `{path}`"));
     println!("Read config file: {}. {:#?}", path, data);
 
-    data
+    Ok(data)
 }
