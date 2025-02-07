@@ -60,18 +60,11 @@ fn use_target_config(target_config: &String) -> CustomResult<()> {
 }
 
 fn get_target_config(branch: &str) -> CustomResult<TargetConfig> {
-    let logger = Logger::new();
     if branch == "next" {
-        return Ok(TargetConfig::JFrog("jfrog".to_string()));
+        Ok(TargetConfig::JFrog("jfrog".to_string()))
+    } else {
+        Ok(TargetConfig::CodeBuild("codebuild".to_string()))
     }
-
-    if branch == "dev-59" || branch == "dev-591" || branch == "dev-510" || branch == "dev-510-batch"
-    {
-        return Ok(TargetConfig::CodeBuild("codebuild".to_string()));
-    }
-
-    logger.error(format!("Unknown branch: {}", branch).as_str());
-    Err(CustomError::UnknownBranch)
 }
 
 pub fn generate_aws_tokens() -> CustomResult<()> {

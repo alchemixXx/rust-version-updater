@@ -2,6 +2,7 @@ root = "path/to/root/for/repos"
 version_update_required = false  # true | false
 repo_rebuild_required = false  # true | false
 process_only_updated_repo = true  # true | false
+disable_checks = false  # true | false
 
 [logger]
 log_level = "Warn" # Debug | Info | Warn | Error

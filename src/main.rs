@@ -163,6 +163,7 @@ fn main() -> CustomResult<()> {
             repo_name: repo,
             role: &config.aws.role,
             sso_script_path: &config.aws.role_script_path,
+            disable_checks: config.disable_checks,
         };
 
         let result = match patcher.update_version_in_repo() {

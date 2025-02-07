@@ -39,6 +39,7 @@ pub struct Data {
     pub version_update_required: bool,
     pub repo_rebuild_required: bool,
     pub process_only_updated_repo: bool,
+    pub disable_checks: bool,
     pub repos: WorkersConfig,
     pub logger: LoggerConfig,
 }

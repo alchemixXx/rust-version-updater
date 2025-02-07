@@ -28,6 +28,7 @@ pub struct Patcher<'repo> {
     pub release_branch: &'repo String,
     pub role: &'repo String,
     pub sso_script_path: &'repo String,
+    pub disable_checks: bool,
 }
 
 impl<'config> LoggerTrait for Patcher<'config> {}
@@ -133,9 +134,16 @@ impl<'repo> Patcher<'repo> {
     fn commit_changes(&self) -> CustomResult<()> {
         let logger = self.get_logger();
         logger.info(format!("Committing changes to git: {}", self.path).as_str());
-        let output = Command::new("git")
-            .arg("commit")
-            .arg("-am")
+        let mut command = Command::new("git");
+        command.arg("commit");
+
+        if self.disable_checks {
+            command.arg("--no-verify").arg("-m");
+        } else {
+            command.arg("-am");
+        }
+
+        let output = command
             .arg(format!("@{} release", self.next_version))
             .current_dir(self.path)
             .output()
@@ -181,11 +189,15 @@ impl<'repo> Patcher<'repo> {
     fn push_to_origin(&self) -> CustomResult<()> {
         let logger = self.get_logger();
         logger.info(format!("Pushing changes to git origin: {}", self.path).as_str());
-        let output = Command::new("git")
-            .arg("push")
-            .arg("origin")
+        let mut command = Command::new("git");
+        command.arg("push").arg("origin");
+
+        if self.disable_checks {
+            command.arg("--no-verify");
+        };
+
+        let output = command
             .arg(self.branch.as_str())
-            .arg("-f")
             .current_dir(self.path)
             .output()
             .map_err(|err| CustomError::CommandExecution(err.to_string()))?;
@@ -205,9 +217,14 @@ impl<'repo> Patcher<'repo> {
     fn push_to_tags(&self) -> CustomResult<()> {
         let logger = self.get_logger();
         logger.info(format!("Pushing tags to git origin: {}", self.path).as_str());
-        let output = Command::new("git")
-            .arg("push")
-            .arg("--tags")
+        let mut command = Command::new("git");
+        command.arg("push").arg("--tags");
+
+        if self.disable_checks {
+            command.arg("--no-verify");
+        }
+
+        let output = command
             .current_dir(self.path)
             .output()
             .map_err(|err| CustomError::CommandExecution(err.to_string()))?;
