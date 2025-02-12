@@ -118,6 +118,7 @@ fn main() -> CustomResult<()> {
         let selecter = VersionSelecter {
             expected_version: &config.git.version,
             repo: &repo_path,
+            release: &config.git.release_branch,
         };
 
         let (current_version, next_version) = match selecter.get_version() {

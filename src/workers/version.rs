@@ -10,6 +10,7 @@ const VERSION_FILES: [&str; 2] = ["package.json", "version.json"];
 pub struct VersionSelecter<'repo> {
     pub expected_version: &'repo Option<String>,
     pub repo: &'repo String,
+    pub release: &'repo String,
 }
 
 impl<'config> LoggerTrait for VersionSelecter<'config> {}
@@ -25,15 +26,63 @@ impl<'repo> VersionSelecter<'repo> {
             None => {
                 logger.debug("Expected version is empty. Getting current version from file...");
 
-                let next_version = self.get_next_version_from_current(current_version.clone())?;
-                logger.debug(format!("Got next version: {}", next_version).as_str());
+                if self.release == "5.8_RELEASE"
+                    || self.release == "5.9_RELEASE"
+                    || self.release == "5.91_RELEASE"
+                {
+                    let next_version =
+                        self.get_next_char_version_from_current(current_version.clone())?;
+                    logger.debug(format!("Got next version: {}", next_version).as_str());
 
-                Ok((current_version, next_version))
+                    Ok((current_version, next_version))
+                } else {
+                    let next_version =
+                        self.get_next_digit_version_from_current(current_version.clone())?;
+                    logger.debug(format!("Got next version: {}", next_version).as_str());
+
+                    Ok((current_version, next_version))
+                }
             }
         }
     }
 
-    fn get_next_version_from_current(&self, mut current_version: String) -> CustomResult<String> {
+    fn get_next_digit_version_from_current(
+        &self,
+        mut current_version: String,
+    ) -> CustomResult<String> {
+        let logger = self.get_logger();
+        let last: char = current_version.chars().last().unwrap();
+        logger.debug(format!("last character in the version: '{}'", last).as_str());
+
+        if last.is_ascii_digit() {
+            let next_letter = ((last as u8) + 1) as char;
+            current_version.pop();
+
+            Ok(format!("{current_version}{next_letter}"))
+        } else {
+            let mut next_letter: Option<char> = None;
+            for ch in current_version.clone().chars().rev() {
+                if ch.is_ascii_digit() {
+                    next_letter = Some(((ch as u8) + 1) as char);
+                    current_version.pop();
+                    break;
+                }
+                current_version.pop();
+            }
+
+            match next_letter {
+                Some(next_letter) => Ok(format!("{current_version}{next_letter}")),
+                None => Err(CustomError::VersionBuild(
+                    "Could not get next version".to_string(),
+                )),
+            }
+        }
+    }
+
+    fn get_next_char_version_from_current(
+        &self,
+        mut current_version: String,
+    ) -> CustomResult<String> {
         let logger = self.get_logger();
         let last: char = current_version.chars().last().unwrap();
         logger.debug(format!("last character in the version: '{}'", last).as_str());
@@ -110,62 +159,143 @@ impl<'repo> VersionSelecter<'repo> {
     }
 }
 
-#[test]
-fn test_get_next_version_from_current_0_should_be_0a() {
-    let version_selecter = VersionSelecter {
-        expected_version: &None,
-        repo: &String::from("/path/to/repo"),
-    };
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0"));
+    #[test]
+    fn test_get_next_letter_version_from_current_0_should_be_0a() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("5.8_RELEASE"),
+        };
 
-    match next_version {
-        Ok(value) => assert_eq!(value, "1.0.0a"),
-        Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        let next_version =
+            version_selecter.get_next_char_version_from_current(String::from("1.0.0"));
+
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.0a"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
     }
-}
 
-#[test]
-fn test_get_next_version_from_current_0a_should_be_0b() {
-    let version_selecter = VersionSelecter {
-        expected_version: &None,
-        repo: &String::from("/path/to/repo"),
-    };
+    #[test]
+    fn test_get_next_letter_version_from_current_0a_should_be_0b() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("5.91_RELEASE"),
+        };
 
-    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0a"));
+        let next_version =
+            version_selecter.get_next_char_version_from_current(String::from("1.0.0a"));
 
-    match next_version {
-        Ok(value) => assert_eq!(value, "1.0.0b"),
-        Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.0b"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
     }
-}
 
-#[test]
-fn test_get_next_version_from_current_0z_should_be_0aa() {
-    let version_selecter = VersionSelecter {
-        expected_version: &None,
-        repo: &String::from("/path/to/repo"),
-    };
+    #[test]
+    fn test_get_next_letter_version_from_current_0z_should_be_0aa() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("5.9_RELEASE"),
+        };
 
-    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0z"));
+        let next_version =
+            version_selecter.get_next_char_version_from_current(String::from("1.0.0z"));
 
-    match next_version {
-        Ok(value) => assert_eq!(value, "1.0.0aa"),
-        Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.0aa"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
     }
-}
 
-#[test]
-fn test_get_next_version_from_current_0az_should_be_0aaa() {
-    let version_selecter = VersionSelecter {
-        expected_version: &None,
-        repo: &String::from("/path/to/repo"),
-    };
+    #[test]
+    fn test_get_next_letter_version_from_current_0az_should_be_0aaa() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("5.8_RELEASE"),
+        };
 
-    let next_version = version_selecter.get_next_version_from_current(String::from("1.0.0az"));
+        let next_version =
+            version_selecter.get_next_char_version_from_current(String::from("1.0.0az"));
 
-    match next_version {
-        Ok(value) => assert_eq!(value, "1.0.0aaa"),
-        Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.0aaa"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
+    }
+
+    #[test]
+    fn test_get_next_digit_version_from_current_0_should_be_1() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("5.10_RELEASE"),
+        };
+
+        let next_version =
+            version_selecter.get_next_digit_version_from_current(String::from("1.0.0"));
+
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.1"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
+    }
+
+    #[test]
+    fn test_get_next_digit_version_from_current_2a_should_be_3() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("10.1_RELEASE"),
+        };
+
+        let next_version =
+            version_selecter.get_next_digit_version_from_current(String::from("1.0.2a"));
+
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.3"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
+    }
+
+    #[test]
+    fn test_get_next_digit_version_from_current_1z_should_be_2() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("11.0_RELEASE"),
+        };
+
+        let next_version =
+            version_selecter.get_next_digit_version_from_current(String::from("1.0.1z"));
+
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.2"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
+    }
+
+    #[test]
+    fn test_get_next_digit_version_from_current_0az_should_be_1() {
+        let version_selecter = VersionSelecter {
+            expected_version: &None,
+            repo: &String::from("/path/to/repo"),
+            release: &String::from("5.10_RELEASE"),
+        };
+
+        let next_version =
+            version_selecter.get_next_digit_version_from_current(String::from("1.0.0az"));
+
+        match next_version {
+            Ok(value) => assert_eq!(value, "1.0.1"),
+            Err(err) => assert_eq!(err.to_string(), "Could not get next version"),
+        }
     }
 }
