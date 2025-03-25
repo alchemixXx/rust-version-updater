@@ -1,8 +1,8 @@
 root = "path/to/root/for/repos"
-version_update_required = false  # true | false
-repo_rebuild_required = false  # true | false
-process_only_updated_repo = true  # true | false
-disable_checks = false  # true | false
+version_update_required = false  # true | false - if true, version will be updated in package.json
+repo_rebuild_required = false  # true | false - if true, repo will be reinstall packages and rebuild
+process_only_updated_repo = true  # true | false - if true, only repos will be processed that have changes in git
+disable_checks = false  # true | false - if true, husky checks will be disabled on commit and push
 
 [logger]
 log_level = "Warn" # Debug | Info | Warn | Error
