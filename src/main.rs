@@ -36,6 +36,7 @@ fn main() -> CustomResult<()> {
         &config.git.branch,
         &config.aws.role_script_path,
         &config.aws.role,
+        &config.aws.sso_start_url,
     )?;
     logger.debug("Logged in to AWS");
 

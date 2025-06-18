@@ -24,6 +24,7 @@ pub struct GitConfig {
 pub struct AwsConfig {
     pub role_script_path: String,
     pub role: String,
+    pub sso_start_url: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -16,6 +16,7 @@ release_branch = "release_branch_here"
 [aws]
 role_script_path="path/to/sso.zsh"
 role="role_name_here"
+sso_start_url="https://ORGANIZATION.awsapps.com/start/#/"
 
 [repos]
 node_workers = [
